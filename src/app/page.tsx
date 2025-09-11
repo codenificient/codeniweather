@@ -29,6 +29,7 @@ export default function Home () {
 			id: `location-${Date.now()}`,
 			name: weather.name,
 			country: weather.sys.country,
+			state: weather.state,
 			lat: weather.coord.lat,
 			lon: weather.coord.lon,
 		}
@@ -47,12 +48,12 @@ export default function Home () {
 		<div className="min-h-screen relative overflow-hidden">
 			{/* Light Theme Background with Animated Elements */}
 			<div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"></div>
-			
+
 			{/* Animated Background Pattern */}
 			<div className="absolute inset-0 opacity-30 animate-pulse" style={{
 				backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
 			}}></div>
-			
+
 			{/* Floating Elements - Light Theme */}
 			<div className="absolute top-20 left-10 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl animate-pulse"></div>
 			<div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>

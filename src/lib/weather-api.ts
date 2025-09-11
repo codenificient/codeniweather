@@ -96,6 +96,10 @@ export class WeatherAPI {
 			const weatherPromises=locations.map( async ( location: any ) => {
 				try {
 					const weatherData=await this.getCurrentWeather( location.lat,location.lon )
+					// Add state information from geocoding API to weather data
+					if ( location.state ) {
+						weatherData.state=location.state
+					}
 					return weatherData
 				} catch ( error ) {
 					console.warn( `Failed to fetch weather for ${location.name}:`,error )

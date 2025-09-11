@@ -78,7 +78,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 	return (
 		<div className="relative w-full max-w-md">
 			<div className="relative">
-				<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 w-5 h-5" />
+				<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
 				<input
 					ref={inputRef}
 					type="text"
@@ -87,7 +87,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 					onFocus={handleInputFocus}
 					onBlur={handleInputBlur}
 					placeholder="Search for a city..."
-					className="w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+					className="input-field w-full pl-10 pr-4 py-3"
 					disabled={loading}
 				/>
 				{( searchLoading||loading )&&(
@@ -103,7 +103,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 						initial={{ opacity: 0,y: -10 }}
 						animate={{ opacity: 1,y: 0 }}
 						exit={{ opacity: 0,y: -10 }}
-						className="absolute top-full left-0 right-0 mt-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto"
+						className="absolute top-full left-0 right-0 mt-2 glass-card-strong rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto"
 					>
 						{results.map( ( weather,index ) => (
 							<motion.button
@@ -112,18 +112,18 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 								animate={{ opacity: 1,x: 0 }}
 								transition={{ delay: index*0.05 }}
 								onClick={() => handleLocationSelect( weather )}
-								className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-white/10 transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl"
+								className="w-full flex items-center space-x-3 px-4 py-3 hover:glass-card transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl text-slate-700"
 							>
-								<MapPin className="w-4 h-4 text-blue-300 flex-shrink-0" />
+								<MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
 								<div className="flex-1 text-left">
-									<div className="text-white font-medium">
-										{weather.name}, {weather.sys.country}
+									<div className="font-medium">
+										{weather.name}{weather.state&&`, ${weather.state}`}, {weather.sys.country}
 									</div>
-									<div className="text-blue-200 text-sm">
+									<div className="text-slate-500 text-sm">
 										{weather.weather[ 0 ].description}
 									</div>
 								</div>
-								<Plus className="w-4 h-4 text-blue-300 flex-shrink-0" />
+								<Plus className="w-4 h-4 text-blue-600 flex-shrink-0" />
 							</motion.button>
 						) )}
 					</motion.div>
@@ -135,9 +135,9 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 					initial={{ opacity: 0,y: -10 }}
 					animate={{ opacity: 1,y: 0 }}
 					exit={{ opacity: 0,y: -10 }}
-					className="absolute top-full left-0 right-0 mt-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl z-50 p-4"
+					className="absolute top-full left-0 right-0 mt-2 glass-card-strong rounded-xl shadow-xl z-50 p-4"
 				>
-					<div className="text-center text-blue-200">
+					<div className="text-center text-slate-600">
 						No cities found for &quot;{query}&quot;
 					</div>
 				</motion.div>

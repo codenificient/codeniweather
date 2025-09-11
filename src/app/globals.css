@@ -139,24 +139,20 @@
   /* Glass Morphism Effects - Light Theme */
   .glass-card {
     @apply bg-white/20 backdrop-blur-xl border border-white/30;
-    box-shadow: 
-      0 8px 32px 0 rgba(31, 38, 135, 0.1),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-      0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   }
 
   .glass-card-strong {
     @apply bg-white/30 backdrop-blur-xl border border-white/40;
-    box-shadow: 
-      0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
       0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   .glass-card-subtle {
     @apply bg-white/10 backdrop-blur-lg border border-white/20;
-    box-shadow: 
-      0 4px 16px 0 rgba(31, 38, 135, 0.05),
+    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.05),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
   }
 

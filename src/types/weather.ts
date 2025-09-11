@@ -2,6 +2,7 @@ export interface WeatherData {
 	id: number
 	name: string
 	country: string
+	state?: string // State/province information
 	coord: {
 		lat: number
 		lon: number
@@ -40,6 +41,7 @@ export interface Location {
 	id: string
 	name: string
 	country: string
+	state?: string // State/province information
 	lat: number
 	lon: number
 	isCurrentLocation?: boolean
