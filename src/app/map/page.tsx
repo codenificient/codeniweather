@@ -1,9 +1,22 @@
 'use client'
 
-import WeatherMap from '@/components/WeatherMap'
 import { useWeather } from '@/contexts/WeatherContext'
 import { motion } from 'framer-motion'
 import { MapPin,Navigation } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Dynamically import WeatherMap to prevent SSR issues
+const WeatherMap=dynamic( () => import( '@/components/WeatherMap' ),{
+	ssr: false,
+	loading: () => (
+		<div className="w-full h-96 glass-card-strong rounded-xl flex items-center justify-center">
+			<div className="text-center">
+				<div className="text-6xl mb-4">🗺️</div>
+				<div className="text-xl font-semibold text-slate-800 dark:text-slate-200">Loading Map...</div>
+			</div>
+		</div>
+	)
+} )
 
 export default function MapPage () {
 	const { locations,weatherData }=useWeather()
@@ -31,8 +44,9 @@ export default function MapPage () {
 						initial={{ opacity: 0,y: 30 }}
 						animate={{ opacity: 1,y: 0 }}
 						transition={{ duration: 0.6,ease: "easeOut" }}
+						className="w-full"
 					>
-						<WeatherMap className="glass-card-strong rounded-3xl p-6" />
+						<WeatherMap className="w-full" />
 					</motion.div>
 				):(
 					/* Empty State */
