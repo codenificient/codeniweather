@@ -1,3 +1,5 @@
+import Layout from '@/components/Layout'
+import { WeatherProvider } from '@/contexts/WeatherContext'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -41,7 +43,11 @@ export default function RootLayout ( {
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 			</head>
 			<body className={inter.className}>
-				{children}
+				<WeatherProvider>
+					<Layout>
+						{children}
+					</Layout>
+				</WeatherProvider>
 			</body>
 		</html>
 	)

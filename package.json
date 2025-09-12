@@ -11,7 +11,15 @@
 		"test-env": "node scripts/test-env.js",
 		"test-api": "node scripts/test-api.js",
 		"debug-api": "node scripts/debug-api.js",
-		"setup": "./setup.sh"
+		"setup": "./setup.sh",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+		"test:unit": "node tests/scripts/run-unit-tests.js",
+		"test:integration": "node tests/scripts/run-integration-tests.js",
+		"test:e2e": "node tests/scripts/run-e2e-tests.js",
+		"test:all": "node tests/scripts/run-all-tests.js",
+		"test:forecast": "node tests/scripts/test-forecast-feature.js"
 	},
 	"dependencies": {
 		"@types/node": "^20",
@@ -31,10 +39,20 @@
 		"typescript": "^5"
 	},
 	"devDependencies": {
+		"@testing-library/jest-dom": "^6.1.4",
+		"@testing-library/react": "^14.1.2",
+		"@testing-library/user-event": "^14.5.1",
+		"@types/jest": "^29.5.8",
 		"@types/node": "^20",
 		"@types/react": "^18",
 		"@types/react-dom": "^18",
+		"babel-jest": "^29.7.0",
 		"dotenv": "^17.2.2",
+		"identity-obj-proxy": "^3.0.0",
+		"jest": "^29.7.0",
+		"jest-environment-jsdom": "^29.7.0",
+		"jest-transform-stub": "^2.0.0",
+		"playwright": "^1.40.0",
 		"typescript": "^5"
 	}
 }

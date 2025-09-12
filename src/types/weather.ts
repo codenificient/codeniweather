@@ -52,10 +52,55 @@ export interface WeatherError {
 	code?: string
 }
 
+export interface ForecastData {
+	dt: number
+	main: {
+		temp: number
+		temp_min: number
+		temp_max: number
+		humidity: number
+		pressure: number
+	}
+	weather: {
+		id: number
+		main: string
+		description: string
+		icon: string
+	}[]
+	wind: {
+		speed: number
+		deg: number
+	}
+	pop: number // Probability of precipitation
+	rain?: {
+		'3h': number
+	}
+	snow?: {
+		'3h': number
+	}
+}
+
+export interface DailyForecast {
+	date: string
+	dayOfWeek: string
+	temp_max: number
+	temp_min: number
+	weather: {
+		id: number
+		main: string
+		description: string
+		icon: string
+	}
+	pop: number
+	rain?: number
+	snow?: number
+}
+
 export interface WeatherState {
 	locations: Location[]
 	currentLocation: Location|null
 	weatherData: Record<string,WeatherData>
+	forecastData: Record<string,DailyForecast[]>
 	loading: boolean
 	error: WeatherError|null
 }

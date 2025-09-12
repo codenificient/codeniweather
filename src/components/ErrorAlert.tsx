@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { AlertCircle,MapPin,RefreshCw,X } from 'lucide-react'
+// Icons replaced with emojis
 import React from 'react'
 
 interface ErrorAlertProps {
@@ -27,7 +27,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 			className="bg-red-500/20 backdrop-blur-md border border-red-500/30 rounded-xl p-4"
 		>
 			<div className="flex items-start space-x-3">
-				<AlertCircle className="w-5 h-5 text-red-300 flex-shrink-0 mt-0.5" />
+				<span className="text-red-300 flex-shrink-0 mt-0.5 text-lg">⚠️</span>
 				<div className="flex-1">
 					<h4 className="text-red-200 font-medium mb-1">
 						{isGeolocationError? 'Location Error':'Error'}
@@ -65,7 +65,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 								onClick={onRetry}
 								className="inline-flex items-center px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs rounded-lg transition-colors"
 							>
-								<RefreshCw className="w-3 h-3 mr-1" />
+								<span className="mr-1 text-sm">🔄</span>
 								Try Again
 							</button>
 						)}
@@ -74,7 +74,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 								onClick={onSearch}
 								className="inline-flex items-center px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 text-xs rounded-lg transition-colors"
 							>
-								<MapPin className="w-3 h-3 mr-1" />
+								<span className="mr-1 text-sm">📍</span>
 								Search City
 							</button>
 						)}
@@ -90,7 +90,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 						className="text-red-300 hover:text-red-200 transition-colors"
 						aria-label="Dismiss error"
 					>
-						<X className="w-4 h-4" />
+						<span className="text-lg">✕</span>
 					</button>
 				)}
 			</div>

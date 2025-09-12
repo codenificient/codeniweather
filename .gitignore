@@ -100,3 +100,7 @@ dist
 # Temporary folders
 tmp/
 temp/
+
+# Test files (keep organized in tests/ directory)
+test-*.js
+test-*.ts

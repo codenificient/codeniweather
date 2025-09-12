@@ -1,18 +1,16 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { MapPin,RefreshCw } from 'lucide-react'
+// Icons replaced with emojis
 import React from 'react'
 
 interface HeaderProps {
 	onRefresh: () => void
-	onGetCurrentLocation: () => void
 	loading?: boolean
 }
 
 const Header: React.FC<HeaderProps>=( {
 	onRefresh,
-	onGetCurrentLocation,
 	loading=false,
 } ) => {
 	return (
@@ -41,20 +39,11 @@ const Header: React.FC<HeaderProps>=( {
 						className="flex items-center space-x-4"
 					>
 						<button
-							onClick={onGetCurrentLocation}
-							disabled={loading}
-							className="btn-secondary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-						>
-							<MapPin className="w-4 h-4" />
-							<span className="hidden sm:inline font-medium">Current Location</span>
-						</button>
-
-						<button
 							onClick={onRefresh}
 							disabled={loading}
 							className="btn-secondary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
 						>
-							<RefreshCw className={`w-4 h-4 ${loading? 'animate-spin':''}`} />
+							<span className={`text-lg ${loading? 'animate-spin':''}`}>🔄</span>
 							<span className="hidden sm:inline font-medium">Refresh</span>
 						</button>
 					</motion.div>
