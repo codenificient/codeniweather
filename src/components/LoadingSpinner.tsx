@@ -33,7 +33,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps>=( {
 				<motion.p
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
-					className="text-blue-200 text-sm"
+					className="text-blue-200 dark:text-blue-300 text-sm"
 				>
 					{text}
 				</motion.p>

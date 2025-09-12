@@ -103,7 +103,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 	return (
 		<div className="relative w-full max-w-md">
 			<div className="relative">
-				<span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-lg">🔍</span>
+				<span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400 text-lg">🔍</span>
 				<input
 					ref={inputRef}
 					type="text"
@@ -137,14 +137,14 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 								animate={{ opacity: 1,x: 0 }}
 								transition={{ delay: index*0.05 }}
 								onClick={() => handleLocationSelect( weather )}
-								className="w-full flex items-center space-x-3 px-4 py-3 hover:glass-card transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl text-slate-800"
+								className="w-full flex items-center space-x-3 px-4 py-3 hover:glass-card transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl text-slate-800 dark:text-slate-200"
 							>
 								<span className="text-blue-600 flex-shrink-0 text-lg">📍</span>
 								<div className="flex-1 text-left">
-									<div className="font-medium text-slate-800">
+									<div className="font-medium text-slate-800 dark:text-slate-200">
 										{weather.name}{weather.state&&`, ${weather.state}`}, {weather.sys.country}
 									</div>
-									<div className="text-slate-600 text-sm">
+									<div className="text-slate-600 dark:text-slate-400 text-sm">
 										{weather.weather[ 0 ].description}
 									</div>
 								</div>
@@ -162,7 +162,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 					exit={{ opacity: 0,y: -10 }}
 					className="absolute top-full left-0 right-0 mt-2 glass-card-strong rounded-xl shadow-xl z-50 p-4"
 				>
-					<div className="text-center text-slate-700">
+					<div className="text-center text-slate-700 dark:text-slate-300">
 						No cities found for &quot;{query}&quot;
 					</div>
 				</motion.div>

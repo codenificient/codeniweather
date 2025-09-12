@@ -1,16 +1,14 @@
-import Layout from '@/components/Layout'
+import ClientLayout from '@/components/ClientLayout'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { WeatherProvider } from '@/contexts/WeatherContext'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter=Inter( { subsets: [ 'latin' ] } )
-
 export const metadata: Metadata={
-	title: '🌤️ CodeniWeather - Your Personal Weather Companion',
+	title: '🌤️ CodeniWeather - Weather Companion',
 	description: 'A modern weather app built with Next.js 14. Track weather for multiple locations with real-time updates.',
 	keywords: 'weather, forecast, temperature, locations, Next.js, React',
-	authors: [ { name: 'Codenificient' } ],
+	authors: [ { name: 'CodenificienT' } ],
 	icons: {
 		icon: [
 			{ url: '/favicon.svg',type: 'image/svg+xml' },
@@ -42,12 +40,14 @@ export default function RootLayout ( {
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 			</head>
-			<body className={inter.className}>
-				<WeatherProvider>
-					<Layout>
-						{children}
-					</Layout>
-				</WeatherProvider>
+			<body className="font-sans">
+				<ThemeProvider>
+					<WeatherProvider>
+						<ClientLayout>
+							{children}
+						</ClientLayout>
+					</WeatherProvider>
+				</ThemeProvider>
 			</body>
 		</html>
 	)

@@ -13,7 +13,7 @@ export default function CitiesPage () {
 
 	if ( loading&&allLocations.length===0 ) {
 		return (
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
 				<div className="flex justify-center items-center py-20">
 					<LoadingSpinner size="lg" text="Loading cities..." />
 				</div>
@@ -22,7 +22,7 @@ export default function CitiesPage () {
 	}
 
 	return (
-		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
 			<motion.div
 				initial={{ opacity: 0,y: 20 }}
 				animate={{ opacity: 1,y: 0 }}
@@ -40,7 +40,7 @@ export default function CitiesPage () {
 
 				{/* Cities Grid */}
 				{allLocations.length>0? (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
 						<AnimatePresence>
 							{allLocations.map( ( location,index ) => {
 								const weather=weatherData[ location.id ]

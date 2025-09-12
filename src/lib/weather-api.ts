@@ -35,7 +35,31 @@ export class WeatherAPI {
 					units: 'metric',
 				},
 			} )
-			return response.data
+
+			const weatherData=response.data
+
+			// Get state information via reverse geocoding
+			try {
+				const reverseGeocodeResponse=await axios.get( `https://api.openweathermap.org/geo/1.0/reverse`,{
+					params: {
+						lat,
+						lon,
+						limit: 1,
+						appid: this.apiKey,
+					},
+				} )
+
+				if ( reverseGeocodeResponse.data&&reverseGeocodeResponse.data.length>0 ) {
+					const locationInfo=reverseGeocodeResponse.data[ 0 ]
+					if ( locationInfo.state ) {
+						weatherData.state=locationInfo.state
+					}
+				}
+			} catch ( reverseError ) {
+				console.warn( 'Failed to get state information via reverse geocoding:',reverseError )
+			}
+
+			return weatherData
 		} catch ( error: any ) {
 			if ( error.response?.status===401 ) {
 				throw new Error( 'Invalid API key. Please check your OpenWeatherMap API key in .env.local' )

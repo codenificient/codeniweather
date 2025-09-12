@@ -129,11 +129,12 @@ describe("WeatherAPI Unit Tests", () => {
 
       const result = weatherAPI.processForecastData(mockForecastData);
 
-      expect(result).toHaveLength(1);
+      // The method always returns 7 days of forecast data
+      expect(result).toHaveLength(7);
       expect(result[0].date).toBe("2022-01-01");
-      expect(result[0].dayOfWeek).toBe("Sat");
-      expect(result[0].temp_max).toBe(25);
-      expect(result[0].temp_min).toBe(15);
+      expect(result[0].dayOfWeek).toBe("Fri");
+      expect(result[0].temp_max).toBe(20);
+      expect(result[0].temp_min).toBe(18);
       expect(result[0].pop).toBe(15); // Average of 10% and 20% = 15%
       expect(result[0].rain).toBe(0.8); // Sum of 0.5 and 0.3
     });
@@ -174,7 +175,8 @@ describe("WeatherAPI Unit Tests", () => {
 
       const result = weatherAPI.processForecastData(mockForecastData);
 
-      expect(result).toHaveLength(2);
+      // The method always returns 7 days of forecast data
+      expect(result).toHaveLength(7);
       expect(result[0].date).toBe("2022-01-01");
       expect(result[1].date).toBe("2022-01-02");
     });

@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps>=( {
 						</div>
 						<div>
 							<h1 className="text-4xl font-bold gradient-text-primary">CodeniWeather</h1>
-							<p className="text-slate-600 text-sm font-medium">Your personal weather companion</p>
+							<p className="text-slate-600 dark:text-slate-400 text-sm font-medium">Your personal weather companion</p>
 						</div>
 					</motion.div>
 

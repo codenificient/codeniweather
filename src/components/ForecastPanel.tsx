@@ -96,18 +96,18 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 	if ( loading ) {
 		return (
 			<div className="glass-card-strong rounded-xl p-8 h-fit w-full">
-				<h3 className="text-lg font-semibold text-slate-800 mb-4">7-Day Forecast</h3>
+				<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">7-Day Forecast</h3>
 				<div className="space-y-4">
 					{[ ...Array( 7 ) ].map( ( _,index ) => (
-						<div key={index} className="flex items-center space-x-4 p-4 rounded-lg bg-slate-100 animate-pulse">
+						<div key={index} className="flex items-center space-x-4 p-4 rounded-lg bg-slate-100 dark:bg-white/10 animate-pulse">
 							<div className="w-24 h-24 flex items-center justify-center">
 								<span className="text-6xl animate-pulse">🌤️</span>
 							</div>
 							<div className="flex-1">
-								<div className="h-5 bg-slate-300 rounded w-20 mb-1"></div>
-								<div className="h-4 bg-slate-300 rounded w-28"></div>
+								<div className="h-5 bg-slate-300 dark:bg-white/20 rounded w-20 mb-1"></div>
+								<div className="h-4 bg-slate-300 dark:bg-white/20 rounded w-28"></div>
 							</div>
-							<div className="h-5 bg-slate-300 rounded w-16"></div>
+							<div className="h-5 bg-slate-300 dark:bg-white/20 rounded w-16"></div>
 						</div>
 					) )}
 				</div>
@@ -118,9 +118,9 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 	if ( !forecast||forecast.length===0 ) {
 		return (
 			<div className="glass-card-strong rounded-xl p-8 h-fit w-full">
-				<h3 className="text-lg font-semibold text-slate-800 mb-4">7-Day Forecast</h3>
-				<div className="text-center text-slate-500 py-8">
-					<Cloud className="w-12 h-12 mx-auto mb-2 text-slate-400" />
+				<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">7-Day Forecast</h3>
+				<div className="text-center text-slate-500 dark:text-slate-400 py-8">
+					<Cloud className="w-12 h-12 mx-auto mb-2 text-slate-400 dark:text-slate-500" />
 					<p>No forecast data available</p>
 				</div>
 			</div>
@@ -129,7 +129,7 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 
 	return (
 		<div className="glass-card-strong rounded-xl p-8 h-fit w-full">
-			<h3 className="text-lg font-semibold text-slate-800 mb-4">7-Day Forecast</h3>
+			<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">7-Day Forecast</h3>
 			<div className="space-y-4">
 				{forecast.map( ( day,index ) => (
 					<motion.div
@@ -140,7 +140,7 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 						className="flex items-center space-x-4 p-4 rounded-lg hover:glass-card transition-colors duration-200"
 					>
 						{/* Day of week */}
-						<div className="w-16 text-base font-semibold text-slate-700">
+						<div className="w-16 text-base font-semibold text-slate-700 dark:text-slate-300">
 							{index===0? 'Today':day.dayOfWeek}
 						</div>
 
@@ -153,10 +153,10 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 
 						{/* Weather description */}
 						<div className="flex-1 min-w-0">
-							<div className="text-base font-semibold text-slate-800 capitalize">
+							<div className="text-base font-semibold text-slate-800 dark:text-slate-200 capitalize">
 								{day.weather.description}
 							</div>
-							<div className="flex items-center space-x-2 text-sm text-slate-600">
+							<div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
 								{getPrecipitationIcon( day )&&(
 									<span className="text-lg">{getPrecipitationIcon( day )}</span>
 								)}
@@ -165,8 +165,8 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 						</div>
 
 						{/* Temperature range */}
-						<div className="text-lg font-bold text-slate-800 text-right">
-							<span className="text-slate-600">{Math.round( day.temp_min )}°</span>
+						<div className="text-lg font-bold text-slate-800 dark:text-slate-200 text-right">
+							<span className="text-slate-600 dark:text-slate-400">{Math.round( day.temp_min )}°</span>
 							<span className="mx-1">/</span>
 							<span>{Math.round( day.temp_max )}°</span>
 						</div>

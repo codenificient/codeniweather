@@ -1,5 +1,7 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useWeather } from '@/contexts/WeatherContext'
 import { motion } from 'framer-motion'
 // Icons replaced with emojis
@@ -15,6 +17,7 @@ const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
 	const router=useRouter()
 	const pathname=usePathname()
 	const { refreshAllWeather,loading }=useWeather()
+	const { theme,toggleTheme }=useTheme()
 
 	const navigationItems=[
 		{ id: 'weather',label: 'Weather',icon: '🌤️',path: '/' },
@@ -45,49 +48,67 @@ const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
 				/>
 			)}
 
-			{/* Sidebar */}
+			{/* Sidebar - Super Thin with Rounded Corners */}
 			<motion.div
-				initial={{ x: -280 }}
-				animate={{ x: isOpen? 0:-280 }}
+				initial={{ x: -80 }}
+				animate={{ x: isOpen? 0:-80 }}
 				transition={{ type: 'spring',damping: 25,stiffness: 200 }}
 				className={`
-          fixed top-0 left-0 h-full w-70 bg-white/90 backdrop-blur-md border-r border-white/20 z-50
-          flex flex-col shadow-xl
+          fixed top-0 left-0 h-screen w-20 glass-card-strong z-50
+          flex flex-col shadow-xl rounded-r-2xl
           ${isOpen? 'translate-x-0':'-translate-x-full'}
           lg:translate-x-0 lg:static lg:z-auto
         `}
 			>
-				{/* Header */}
-				<div className="p-6 border-b border-white/20">
-					<div className="flex items-center space-x-3">
+				{/* Header - Vertical */}
+				<div className="p-3 border-b border-white/20 dark:border-white/10">
+					<div className="flex flex-col items-center space-y-2">
 						<div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
-							<span className="text-2xl">🌤️</span>
+							<span className="text-xl">🌤️</span>
 						</div>
-						<div>
-							<h1 className="text-xl font-bold text-slate-800">CodeniWeather</h1>
-							<p className="text-sm text-slate-600">Weather Dashboard</p>
+						<div className="text-center">
+							<h1 className="text-xs font-bold text-slate-800 dark:text-slate-300 leading-tight">Weather</h1>
 						</div>
 					</div>
 				</div>
 
-				{/* Quick Actions */}
-				<div className="p-4 border-b border-white/20">
+				{/* Quick Actions - Vertical */}
+				<div className="p-2 border-b border-white/20 dark:border-white/10">
 					<div className="space-y-2">
 						<button
 							onClick={handleRefresh}
 							disabled={loading}
-							className="w-full flex items-center space-x-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
+							className="w-full flex flex-col items-center space-y-1 px-2 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50"
+							title="Refresh All"
 						>
 							<div className="p-2 bg-blue-500/20 rounded-lg">
 								<span className={`text-lg text-blue-600 ${loading? 'animate-spin':''}`}>🔄</span>
 							</div>
-							<span className="font-medium">Refresh All</span>
+							<span className="text-xs font-medium text-center text-slate-700 dark:text-slate-300">Refresh</span>
 						</button>
+
+						{/* Theme Switcher */}
+						<Button
+							onClick={toggleTheme}
+							variant="ghost"
+							size="sm"
+							className="w-full flex flex-col items-center space-y-1 px-2 py-3 h-auto"
+							title={`Switch to ${theme==='light'? 'dark':'light'} theme`}
+						>
+							<div className="p-2 bg-slate-500/20 rounded-lg">
+								<span className="text-lg text-slate-600 dark:text-slate-300">
+									{theme==='light'? '🌙':'☀️'}
+								</span>
+							</div>
+							<span className="text-xs font-medium text-center text-slate-700 dark:text-slate-300">
+								{theme==='light'? 'Dark':'Light'}
+							</span>
+						</Button>
 					</div>
 				</div>
 
-				{/* Navigation */}
-				<nav className="flex-1 p-4">
+				{/* Navigation - Vertical */}
+				<nav className="flex-1 p-2">
 					<div className="space-y-1">
 						{navigationItems.map( ( item ) => {
 							const isActive=pathname===item.path
@@ -97,30 +118,24 @@ const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
 									key={item.id}
 									onClick={() => handleNavigation( item.path )}
 									className={`
-                    w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
+                    w-full flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200
                     ${isActive
 											? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-											:'text-slate-700 hover:bg-slate-100'
+											:'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
 										}
                   `}
+									title={item.label}
 								>
-									<div className={`p-2 rounded-lg ${isActive? 'bg-white/20':'bg-slate-100'}`}>
-										<span className={`text-lg ${isActive? 'text-white':'text-slate-600'}`}>{item.icon}</span>
+									<div className={`p-2 rounded-lg ${isActive? 'bg-white/20':'bg-slate-100 dark:bg-white/10'}`}>
+										<span className={`text-lg ${isActive? 'text-white':'text-slate-600 dark:text-slate-400'}`}>{item.icon}</span>
 									</div>
-									<span className="font-medium">{item.label}</span>
+									<span className="text-xs font-medium text-center leading-tight text-slate-700 dark:text-slate-300">{item.label}</span>
 								</button>
 							)
 						} )}
 					</div>
 				</nav>
 
-				{/* Footer */}
-				<div className="p-4 border-t border-white/20">
-					<div className="text-center text-sm text-slate-500">
-						<p>Powered by OpenWeatherMap</p>
-						<p className="mt-1">v1.0.0</p>
-					</div>
-				</div>
 			</motion.div>
 		</>
 	)
