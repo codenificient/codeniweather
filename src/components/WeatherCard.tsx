@@ -76,7 +76,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 						<span className="text-blue-300 text-lg">📍</span>
 					</div>
 					<div>
-						<h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+						<h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
 							{location.name}
 							{isCurrentLocation&&(
 								<span className="ml-3 text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 rounded-full font-medium">
@@ -84,7 +84,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 								</span>
 							)}
 						</h3>
-						<p className="text-slate-600 dark:text-slate-400 dark:text-slate-400 text-sm font-medium">
+						<p className="text-slate-600 dark:text-slate-400 text-sm font-medium">
 							{location.state&&`${location.state}, `}{location.country}
 						</p>
 					</div>
@@ -105,7 +105,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 								e.stopPropagation()
 								onRemove()
 							}}
-							className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-300 group/remove"
+							className="p-2 text-red-400 dark:text-red-500 hover:text-red-300 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-xl transition-all duration-300 group/remove"
 							aria-label="Remove location"
 						>
 							<span className="group-hover/remove:scale-110 transition-transform">×</span>
@@ -145,7 +145,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 			{/* Weather Details */}
 			<div className="grid grid-cols-2 gap-4 mb-6">
 				{weatherInfo.map( ( info,index ) => (
-					<div key={index} className="flex items-center space-x-3 p-3 bg-slate-100/50 dark:bg-white/10 rounded-xl hover:bg-slate-200/50 dark:bg-white/10 dark:hover:bg-white/20 transition-all duration-300 group/detail">
+					<div key={index} className="flex items-center space-x-3 p-3 bg-slate-100/50 dark:bg-white/10 rounded-xl hover:bg-slate-200/50 dark:hover:bg-white/20 transition-all duration-300 group/detail">
 						<div className="p-2 bg-slate-200/50 dark:bg-white/10 rounded-lg group-hover/detail:bg-slate-300/50 dark:group-hover/detail:bg-white/20 transition-colors">
 							<span className="text-lg">{info.icon}</span>
 						</div>

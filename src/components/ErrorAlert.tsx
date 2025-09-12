@@ -63,7 +63,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 						{onRetry&&(
 							<button
 								onClick={onRetry}
-								className="inline-flex items-center px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs rounded-lg transition-colors"
+								className="inline-flex items-center px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 dark:bg-red-500/30 dark:hover:bg-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-lg transition-colors"
 							>
 								<span className="mr-1 text-sm">🔄</span>
 								Try Again
@@ -72,7 +72,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 						{onSearch&&(
 							<button
 								onClick={onSearch}
-								className="inline-flex items-center px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 text-xs rounded-lg transition-colors"
+								className="inline-flex items-center px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 dark:bg-blue-500/30 dark:hover:bg-blue-500/40 text-blue-700 dark:text-blue-300 text-xs rounded-lg transition-colors"
 							>
 								<span className="mr-1 text-sm">📍</span>
 								Search City
@@ -87,7 +87,7 @@ const ErrorAlert: React.FC<ErrorAlertProps>=( { error,onDismiss,onRetry,onSearch
 				{onDismiss&&(
 					<button
 						onClick={onDismiss}
-						className="text-red-300 hover:text-red-200 transition-colors"
+						className="text-red-300 dark:text-red-400 hover:text-red-200 dark:hover:text-red-300 transition-colors"
 						aria-label="Dismiss error"
 					>
 						<span className="text-lg">✕</span>

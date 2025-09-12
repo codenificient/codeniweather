@@ -9,12 +9,12 @@ const Footer: React.FC=() => {
 			transition={{ duration: 0.6,ease: "easeOut" }}
 			className="w-full py-4 border-t border-slate-200/30 dark:border-white/10 bg-white/10 backdrop-blur-sm shadow-lg shadow-slate-200/20 -mt-1"
 		>
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
 					{/* Brand and Copyright Combined */}
 					<div className="flex items-center space-x-2">
 						<span className="text-lg">🌤️</span>
-						<span className="text-xs text-slate-600 dark:text-slate-400 font-medium">CodeniWeather © 2024</span>
+						<span className="text-xs text-slate-600 dark:text-slate-400 font-medium">CodeniWeather © 2025</span>
 					</div>
 
 					{/* Powered by OpenWeather */}

@@ -98,7 +98,7 @@ export default function CityDetailsPage () {
 
 	if ( loading ) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+			<div className="min-h-screen flex items-center justify-center">
 				<LoadingSpinner size="lg" text="Loading city details..." />
 			</div>
 		)
@@ -106,7 +106,7 @@ export default function CityDetailsPage () {
 
 	if ( error ) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+			<div className="min-h-screen flex items-center justify-center p-4">
 				<div className="max-w-md w-full">
 					<ErrorAlert
 						error={{ message: error }}
@@ -127,9 +127,9 @@ export default function CityDetailsPage () {
 
 	if ( !weather||!location ) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
-					<h1 className="text-2xl font-bold text-slate-700 mb-4">City Not Found</h1>
+					<h1 className="text-2xl font-bold text-slate-700 dark:text-slate-300 mb-4">City Not Found</h1>
 					<button
 						onClick={handleBack}
 						className="btn-primary"
@@ -143,24 +143,24 @@ export default function CityDetailsPage () {
 	}
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+		<div className="w-full">
 			{/* Header */}
-			<div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-white/20">
+			<div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-white/20 dark:border-white/10">
 				<div className="w-full px-4 sm:px-6 lg:px-8 py-4">
 					<div className="flex items-center space-x-4">
 						<button
 							onClick={handleBack}
-							className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+							className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
 						>
-							<ArrowLeft className="w-6 h-6 text-slate-600" />
+							<ArrowLeft className="w-6 h-6 text-slate-600 dark:text-slate-400" />
 						</button>
 						<div className="flex items-center space-x-3">
-							<MapPin className="w-5 h-5 text-blue-600" />
+							<MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
 							<div>
-								<h1 className="text-2xl font-bold text-slate-800">
+								<h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
 									{location.name}
 								</h1>
-								<p className="text-slate-600">
+								<p className="text-slate-600 dark:text-slate-400">
 									{location.state&&`${location.state}, `}{location.country}
 								</p>
 							</div>
@@ -189,19 +189,19 @@ export default function CityDetailsPage () {
 									<div className="text-6xl font-bold gradient-text-primary mb-2">
 										{weatherAPI.formatTemperature( weather.main.temp )}
 									</div>
-									<div className="text-2xl text-slate-600 capitalize font-medium">
+									<div className="text-2xl text-slate-600 dark:text-slate-400 capitalize font-medium">
 										{weather.weather[ 0 ].description}
 									</div>
-									<div className="text-lg text-slate-500">
+									<div className="text-lg text-slate-500 dark:text-slate-500">
 										Feels like {weatherAPI.formatTemperature( weather.main.feels_like )}
 									</div>
 								</div>
 							</div>
 							<div className="text-right space-y-2">
-								<div className="text-lg text-slate-600">
+								<div className="text-lg text-slate-600 dark:text-slate-400">
 									H: {weatherAPI.formatTemperature( weather.main.temp_max )}
 								</div>
-								<div className="text-lg text-slate-600">
+								<div className="text-lg text-slate-600 dark:text-slate-400">
 									L: {weatherAPI.formatTemperature( weather.main.temp_min )}
 								</div>
 							</div>
@@ -213,27 +213,27 @@ export default function CityDetailsPage () {
 						{/* Temperature Details */}
 						<div className="glass-card rounded-2xl p-6">
 							<div className="flex items-center space-x-3 mb-4">
-								<div className="p-2 bg-orange-500/20 rounded-xl">
-									<Thermometer className="w-5 h-5 text-orange-600" />
+								<div className="p-2 bg-orange-500/20 dark:bg-orange-400/20 rounded-xl">
+									<Thermometer className="w-5 h-5 text-orange-600 dark:text-orange-400" />
 								</div>
-								<h3 className="text-lg font-semibold text-slate-800">Temperature</h3>
+								<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Temperature</h3>
 							</div>
 							<div className="space-y-3">
 								<div className="flex justify-between">
-									<span className="text-slate-600">Current</span>
-									<span className="font-semibold">{weatherAPI.formatTemperature( weather.main.temp )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Current</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatTemperature( weather.main.temp )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Feels like</span>
-									<span className="font-semibold">{weatherAPI.formatTemperature( weather.main.feels_like )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Feels like</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatTemperature( weather.main.feels_like )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Min</span>
-									<span className="font-semibold">{weatherAPI.formatTemperature( weather.main.temp_min )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Min</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatTemperature( weather.main.temp_min )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Max</span>
-									<span className="font-semibold">{weatherAPI.formatTemperature( weather.main.temp_max )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Max</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatTemperature( weather.main.temp_max )}</span>
 								</div>
 							</div>
 						</div>
@@ -241,26 +241,26 @@ export default function CityDetailsPage () {
 						{/* Wind Details */}
 						<div className="glass-card rounded-2xl p-6">
 							<div className="flex items-center space-x-3 mb-4">
-								<div className="p-2 bg-blue-500/20 rounded-xl">
-									<Wind className="w-5 h-5 text-blue-600" />
+								<div className="p-2 bg-blue-500/20 dark:bg-blue-400/20 rounded-xl">
+									<Wind className="w-5 h-5 text-blue-600 dark:text-blue-400" />
 								</div>
-								<h3 className="text-lg font-semibold text-slate-800">Wind</h3>
+								<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Wind</h3>
 							</div>
 							<div className="space-y-3">
 								<div className="flex justify-between">
-									<span className="text-slate-600">Speed</span>
-									<span className="font-semibold">{weatherAPI.formatWindSpeed( weather.wind.speed )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Speed</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatWindSpeed( weather.wind.speed )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Direction</span>
-									<span className="font-semibold flex items-center">
+									<span className="text-slate-600 dark:text-slate-400">Direction</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center">
 										<Compass className="w-4 h-4 mr-1" />
 										{getWindDirection( weather.wind.deg )}
 									</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Degrees</span>
-									<span className="font-semibold">{weather.wind.deg}°</span>
+									<span className="text-slate-600 dark:text-slate-400">Degrees</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weather.wind.deg}°</span>
 								</div>
 							</div>
 						</div>
@@ -268,23 +268,23 @@ export default function CityDetailsPage () {
 						{/* Humidity & Pressure */}
 						<div className="glass-card rounded-2xl p-6">
 							<div className="flex items-center space-x-3 mb-4">
-								<div className="p-2 bg-cyan-500/20 rounded-xl">
-									<Droplets className="w-5 h-5 text-cyan-600" />
+								<div className="p-2 bg-cyan-500/20 dark:bg-cyan-400/20 rounded-xl">
+									<Droplets className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
 								</div>
-								<h3 className="text-lg font-semibold text-slate-800">Humidity</h3>
+								<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Humidity</h3>
 							</div>
 							<div className="space-y-3">
 								<div className="flex justify-between">
-									<span className="text-slate-600">Humidity</span>
-									<span className="font-semibold">{weatherAPI.formatHumidity( weather.main.humidity )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Humidity</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatHumidity( weather.main.humidity )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Pressure</span>
-									<span className="font-semibold">{weatherAPI.formatPressure( weather.main.pressure )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Pressure</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatPressure( weather.main.pressure )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Clouds</span>
-									<span className="font-semibold">{weather.clouds.all}%</span>
+									<span className="text-slate-600 dark:text-slate-400">Clouds</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weather.clouds.all}%</span>
 								</div>
 							</div>
 						</div>
@@ -292,19 +292,19 @@ export default function CityDetailsPage () {
 						{/* Visibility */}
 						<div className="glass-card rounded-2xl p-6">
 							<div className="flex items-center space-x-3 mb-4">
-								<div className="p-2 bg-purple-500/20 rounded-xl">
-									<Eye className="w-5 h-5 text-purple-600" />
+								<div className="p-2 bg-purple-500/20 dark:bg-purple-400/20 rounded-xl">
+									<Eye className="w-5 h-5 text-purple-600 dark:text-purple-400" />
 								</div>
-								<h3 className="text-lg font-semibold text-slate-800">Visibility</h3>
+								<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Visibility</h3>
 							</div>
 							<div className="space-y-3">
 								<div className="flex justify-between">
-									<span className="text-slate-600">Distance</span>
-									<span className="font-semibold">{weatherAPI.formatVisibility( weather.visibility )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Distance</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatVisibility( weather.visibility )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Cloud Cover</span>
-									<span className="font-semibold">{weather.clouds.all}%</span>
+									<span className="text-slate-600 dark:text-slate-400">Cloud Cover</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{weather.clouds.all}%</span>
 								</div>
 							</div>
 						</div>
@@ -312,19 +312,19 @@ export default function CityDetailsPage () {
 						{/* Sunrise/Sunset */}
 						<div className="glass-card rounded-2xl p-6">
 							<div className="flex items-center space-x-3 mb-4">
-								<div className="p-2 bg-yellow-500/20 rounded-xl">
-									<Sunrise className="w-5 h-5 text-yellow-600" />
+								<div className="p-2 bg-yellow-500/20 dark:bg-yellow-400/20 rounded-xl">
+									<Sunrise className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
 								</div>
-								<h3 className="text-lg font-semibold text-slate-800">Sun Times</h3>
+								<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Sun Times</h3>
 							</div>
 							<div className="space-y-3">
 								<div className="flex justify-between">
-									<span className="text-slate-600">Sunrise</span>
-									<span className="font-semibold">{formatTime( weather.sys.sunrise )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Sunrise</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{formatTime( weather.sys.sunrise )}</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Sunset</span>
-									<span className="font-semibold">{formatTime( weather.sys.sunset )}</span>
+									<span className="text-slate-600 dark:text-slate-400">Sunset</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200">{formatTime( weather.sys.sunset )}</span>
 								</div>
 							</div>
 						</div>
@@ -332,21 +332,21 @@ export default function CityDetailsPage () {
 						{/* Additional Info */}
 						<div className="glass-card rounded-2xl p-6">
 							<div className="flex items-center space-x-3 mb-4">
-								<div className="p-2 bg-green-500/20 rounded-xl">
-									<Gauge className="w-5 h-5 text-green-600" />
+								<div className="p-2 bg-green-500/20 dark:bg-green-400/20 rounded-xl">
+									<Gauge className="w-5 h-5 text-green-600 dark:text-green-400" />
 								</div>
-								<h3 className="text-lg font-semibold text-slate-800">Additional</h3>
+								<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Additional</h3>
 							</div>
 							<div className="space-y-3">
 								<div className="flex justify-between">
-									<span className="text-slate-600">Last Updated</span>
-									<span className="font-semibold text-sm">
+									<span className="text-slate-600 dark:text-slate-400">Last Updated</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
 										{new Date( weather.dt*1000 ).toLocaleTimeString()}
 									</span>
 								</div>
 								<div className="flex justify-between">
-									<span className="text-slate-600">Coordinates</span>
-									<span className="font-semibold text-sm">
+									<span className="text-slate-600 dark:text-slate-400">Coordinates</span>
+									<span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
 										{weather.coord.lat.toFixed( 2 )}, {weather.coord.lon.toFixed( 2 )}
 									</span>
 								</div>

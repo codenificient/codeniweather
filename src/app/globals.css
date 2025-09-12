@@ -240,19 +240,19 @@
 
   /* Modern Buttons - Light Theme */
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95;
+    @apply px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-400 dark:to-blue-500 dark:hover:from-blue-500 dark:hover:to-blue-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 glass-card text-slate-700 font-medium rounded-xl hover:glass-card-strong transition-all duration-300 border-slate-200/50;
+    @apply px-6 py-3 glass-card text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:glass-card-strong transition-all duration-300 border-slate-200/50 dark:border-slate-700/30;
   }
 
   .btn-ghost {
-    @apply px-6 py-3 text-slate-600 hover:text-slate-800 hover:bg-white/20 font-medium rounded-xl transition-all duration-300;
+    @apply px-6 py-3 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/20 dark:hover:bg-white/10 font-medium rounded-xl transition-all duration-300;
   }
 
   .btn-glass {
-    @apply px-6 py-3 glass-card text-slate-700 font-medium rounded-xl hover:glass-card-strong transition-all duration-300;
+    @apply px-6 py-3 glass-card text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:glass-card-strong transition-all duration-300;
   }
 
   /* Weather Cards - Light Theme */
