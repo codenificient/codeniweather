@@ -1,6 +1,8 @@
 'use client'
 
+import { useTheme } from '@/contexts/ThemeContext'
 import { convertTemperature,getTemperatureUnit } from '@/lib/unit-conversion'
+import { getWeatherIcon } from '@/lib/weather-icons'
 import { DailyForecast } from '@/types/weather'
 import { motion } from 'framer-motion'
 import { Cloud } from 'lucide-react'
@@ -17,57 +19,10 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 	loading=false,
 	units='metric',
 } ) => {
-	const getWeatherIcon=( weather: DailyForecast[ 'weather' ] ) => {
-		const iconCode=weather.icon
-		const main=weather.main.toLowerCase()
-		const description=weather.description.toLowerCase()
-
-		// Map weather conditions to beautiful emojis
-		if ( main.includes( 'clear' ) ) {
-			return '☀️'
-		}
-		if ( main.includes( 'clouds' ) ) {
-			if ( description.includes( 'few' )||description.includes( 'scattered' ) ) {
-				return '⛅'
-			}
-			if ( description.includes( 'broken' )||description.includes( 'overcast' ) ) {
-				return '☁️'
-			}
-			return '⛅'
-		}
-		if ( main.includes( 'rain' ) ) {
-			if ( description.includes( 'light' )||description.includes( 'drizzle' ) ) {
-				return '🌦️'
-			}
-			if ( description.includes( 'heavy' )||description.includes( 'shower' ) ) {
-				return '🌧️'
-			}
-			return '🌧️'
-		}
-		if ( main.includes( 'snow' ) ) {
-			return '❄️'
-		}
-		if ( main.includes( 'thunderstorm' ) ) {
-			return '⛈️'
-		}
-		if ( main.includes( 'mist' )||main.includes( 'fog' )||main.includes( 'haze' ) ) {
-			return '🌫️'
-		}
-		if ( main.includes( 'tornado' ) ) {
-			return '🌪️'
-		}
-		if ( main.includes( 'sand' )||main.includes( 'dust' ) ) {
-			return '🌪️'
-		}
-		if ( main.includes( 'ash' ) ) {
-			return '🌋'
-		}
-		if ( main.includes( 'squall' ) ) {
-			return '💨'
-		}
-
-		// Default fallback
-		return '🌤️'
+	const { theme }=useTheme()
+	const getWeatherIconForForecast=( weather: DailyForecast[ 'weather' ] ) => {
+		// Use the shared weather icon utility with theme awareness
+		return getWeatherIcon( weather.description,theme )
 	}
 
 	const getPrecipitationIcon=( forecast: DailyForecast ) => {
@@ -150,7 +105,7 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 						{/* Weather icon */}
 						<div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
 							<span className="text-6xl">
-								{getWeatherIcon( day.weather )}
+								{getWeatherIconForForecast( day.weather )}
 							</span>
 						</div>
 

@@ -1,6 +1,8 @@
 'use client'
 
+import { useTheme } from '@/contexts/ThemeContext'
 import { useWeather } from '@/contexts/WeatherContext'
+import { getWeatherIcon } from '@/lib/weather-icons'
 import { Map } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import dynamic from 'next/dynamic'
@@ -15,6 +17,7 @@ interface WeatherMapProps {
 
 const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 	const { weatherData,locations,currentLocation,addLocation,removeLocation,searchCities }=useWeather()
+	const { theme }=useTheme()
 	const [ selectedLayer,setSelectedLayer ]=useState( 'temperature' )
 	const [ isSearching,setIsSearching ]=useState( false )
 	const [ searchQuery,setSearchQuery ]=useState( '' )
@@ -65,22 +68,9 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 
 	const mapConfig=getMapCenterAndZoom()
 
-	// Get weather icon based on weather condition
-	const getWeatherIcon=( condition: string ) => {
-		const conditionMap: { [ key: string ]: string }={
-			'clear sky': '☀️',
-			'few clouds': '🌤️',
-			'scattered clouds': '⛅',
-			'broken clouds': '☁️',
-			'shower rain': '🌦️',
-			'rain': '🌧️',
-			'thunderstorm': '⛈️',
-			'snow': '❄️',
-			'mist': '🌫️',
-			'fog': '🌫️',
-			'haze': '🌫️'
-		}
-		return conditionMap[ condition.toLowerCase() ]||'🌤️'
+	// Get weather icon based on weather condition and theme
+	const getWeatherIconForCondition=( condition: string ) => {
+		return getWeatherIcon( condition,theme )
 	}
 
 	// Get weather data for a location
@@ -261,7 +251,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 				</div>
 
 				{/* Map Controls Overlay */}
-				<div className="absolute top-4 right-4 z-10">
+				<div className="absolute bottom-[8rem] right-4 z-10">
 					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3">
 						<div className="flex items-center gap-2 mb-2">
 							<span className="text-lg">
@@ -299,7 +289,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 										📍 Current Location
 									</h5>
 									<span className="text-2xl">
-										{getWeatherIcon( getLocationWeather( currentLocation.id )?.weather?.[ 0 ]?.description||'clear sky' )}
+										{getWeatherIconForCondition( getLocationWeather( currentLocation.id )?.weather?.[ 0 ]?.description||'clear sky' )}
 									</span>
 								</div>
 								<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
@@ -330,7 +320,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 										</h5>
 										<div className="flex items-center gap-2">
 											<span className="text-2xl">
-												{getWeatherIcon( weather?.weather?.[ 0 ]?.description||'clear sky' )}
+												{getWeatherIconForCondition( weather?.weather?.[ 0 ]?.description||'clear sky' )}
 											</span>
 											<div className="flex gap-1">
 												{/* Zoom to location button */}

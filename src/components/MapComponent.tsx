@@ -1,5 +1,7 @@
 'use client'
 
+import { useTheme } from '@/contexts/ThemeContext'
+import { getWeatherIcon } from '@/lib/weather-icons'
 import { Map,Marker,NavigationControl,Popup } from '@maptiler/sdk'
 import { PrecipitationLayer,PressureLayer,RadarLayer,TemperatureLayer,WindLayer } from '@maptiler/weather'
 import { useEffect,useRef,useState } from 'react'
@@ -29,12 +31,14 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	onMapReady,
 	onZoomToLocation
 } ) => {
+	const { theme }=useTheme()
 	const mapContainer=useRef<HTMLDivElement>( null )
 	const mapRef=useRef<Map|null>( null )
 	const markersRef=useRef<Marker[]>( [] )
 	const weatherLayerRef=useRef<any>( null )
 	const mouseMoveHandlerRef=useRef<any>( null )
 	const mouseLeaveHandlerRef=useRef<any>( null )
+	const navigationControlRef=useRef<any>( null )
 	const [ precipitationData,setPrecipitationData ]=useState<Record<string,any>>( {} )
 	const [ cursorWeatherData,setCursorWeatherData ]=useState<any>( null )
 	const [ cursorPosition,setCursorPosition ]=useState<{ lat: number; lng: number }|null>( null )
@@ -71,22 +75,9 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		}
 	}
 
-	// Get weather icon based on weather condition
-	const getWeatherIcon=( condition: string ) => {
-		const conditionMap: { [ key: string ]: string }={
-			'clear sky': '☀️',
-			'few clouds': '🌤️',
-			'scattered clouds': '⛅',
-			'broken clouds': '☁️',
-			'shower rain': '🌦️',
-			'rain': '🌧️',
-			'thunderstorm': '⛈️',
-			'snow': '❄️',
-			'mist': '🌫️',
-			'fog': '🌫️',
-			'haze': '🌫️'
-		}
-		return conditionMap[ condition.toLowerCase() ]||'🌤️'
+	// Get weather icon based on weather condition and theme
+	const getWeatherIconForCondition=( condition: string ) => {
+		return getWeatherIcon( condition,theme )
 	}
 
 	// Get weather data for a location
@@ -268,8 +259,12 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				...( apiKey&&apiKey!=='YOUR_MAPTILER_API_KEY'&&{ apiKey } )
 			} )
 
-			// Add navigation control
-			map.addControl( new NavigationControl(),'top-right' )
+			// Add navigation control only if it hasn't been added yet
+			if ( !navigationControlRef.current ) {
+				const navControl=new NavigationControl()
+				map.addControl( navControl,'top-right' )
+				navigationControlRef.current=navControl
+			}
 
 			mapRef.current=map
 
@@ -309,7 +304,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				}
 
 				const weather=getLocationWeather( location.id )
-				const weatherIcon=getWeatherIcon( weather?.weather?.description||'clear sky' )
+				const weatherIcon=getWeatherIconForCondition( weather?.weather?.description||'clear sky' )
 
 				const marker=new Marker( {
 					color: location.id===currentLocation?.id? '#3b82f6':'#ef4444'
@@ -367,6 +362,11 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		// Cleanup
 		return () => {
 			if ( mapRef.current ) {
+				// Remove navigation control if it exists
+				if ( navigationControlRef.current ) {
+					mapRef.current.removeControl( navigationControlRef.current )
+					navigationControlRef.current=null
+				}
 				// Event listeners will be cleaned up when map is removed
 			}
 			if ( weatherLayerRef.current&&mapRef.current ) {
@@ -403,7 +403,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			}
 
 			const weather=getLocationWeather( location.id )
-			const weatherIcon=getWeatherIcon( weather?.weather?.description||'clear sky' )
+			const weatherIcon=getWeatherIconForCondition( weather?.weather?.description||'clear sky' )
 
 			const marker=new Marker( {
 				color: location.id===currentLocation?.id? '#3b82f6':'#ef4444'
@@ -581,7 +581,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			{/* Cursor Weather Data Display */}
 			{cursorWeatherData&&cursorPosition&&(
-				<div className="absolute top-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-xs">
+				<div className="absolute top-16 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-xs">
 					<div className="flex items-center gap-2 mb-2">
 						<span className="text-2xl">🌦️</span>
 						<h3 className="font-semibold text-slate-800 dark:text-slate-200">Weather Data</h3>
@@ -612,7 +612,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			{/* Precipitation Data Display for Saved Locations */}
 			{selectedLayer==='precipitation'&&Object.keys( precipitationData ).length>0&&(
-				<div className="absolute top-4 left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-sm">
+				<div className="absolute top-16 left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-sm">
 					<div className="flex items-center gap-2 mb-3">
 						<span className="text-2xl">🌧️</span>
 						<h3 className="font-semibold text-slate-800 dark:text-slate-200">Precipitation Data</h3>
