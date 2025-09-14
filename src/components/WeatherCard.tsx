@@ -13,6 +13,7 @@ interface WeatherCardProps {
 	onRemove?: () => void
 	onSetCurrent?: () => void
 	isCurrentLocation?: boolean
+	units?: 'metric'|'imperial'
 }
 
 const WeatherCard: React.FC<WeatherCardProps>=( {
@@ -21,6 +22,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 	onRemove,
 	onSetCurrent,
 	isCurrentLocation=false,
+	units='metric',
 } ) => {
 	const weatherAPI=WeatherAPI.getInstance()
 	const router=useRouter()
@@ -47,7 +49,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 		{
 			icon: '💨',
 			label: 'Wind',
-			value: `${weatherAPI.formatWindSpeed( weather.wind.speed )} ${weatherAPI.getWindDirection( weather.wind.deg )}`,
+			value: `${weatherAPI.formatWindSpeed( weather.wind.speed,units )} ${weatherAPI.getWindDirection( weather.wind.deg )}`,
 		},
 		{
 			icon: '👁️',
@@ -125,7 +127,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 					/>
 					<div>
 						<div className="text-5xl font-bold gradient-text-primary mb-2">
-							{weatherAPI.formatTemperature( weather.main.temp )}
+							{weatherAPI.formatTemperature( weather.main.temp,units )}
 						</div>
 						<div className="text-slate-700 dark:text-slate-300 capitalize text-lg font-medium">
 							{weather.weather[ 0 ].description}
@@ -134,10 +136,10 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 				</div>
 				<div className="text-right space-y-1">
 					<div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-						H: {weatherAPI.formatTemperature( weather.main.temp_max )}
+						H: {weatherAPI.formatTemperature( weather.main.temp_max,units )}
 					</div>
 					<div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-						L: {weatherAPI.formatTemperature( weather.main.temp_min )}
+						L: {weatherAPI.formatTemperature( weather.main.temp_min,units )}
 					</div>
 				</div>
 			</div>

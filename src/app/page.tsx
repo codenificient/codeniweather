@@ -20,6 +20,7 @@ export default function Home () {
 		addLocation,
 		searchCities,
 		clearError,
+		units,
 	}=useWeather()
 
 	const weatherAPI=WeatherAPI.getInstance()
@@ -100,11 +101,11 @@ export default function Home () {
 	}
 
 	return (
-		<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+		<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">
 			<motion.div
 				initial={{ opacity: 0,y: 20 }}
 				animate={{ opacity: 1,y: 0 }}
-				className="space-y-8"
+				className="space-y-8 h-full"
 			>
 				{/* Search Section */}
 				<motion.div
@@ -173,22 +174,22 @@ export default function Home () {
 												</span>
 											</div>
 											<div className="text-4xl font-bold text-slate-800 dark:text-slate-200 dark:text-slate-200 mb-2">
-												{weatherAPI.formatTemperature( currentWeather.main.temp )}
+												{weatherAPI.formatTemperature( currentWeather.main.temp,units )}
 											</div>
 											<div className="text-2xl text-slate-700 dark:text-slate-300 dark:text-slate-300 capitalize font-medium">
 												{currentWeather.weather[ 0 ].description}
 											</div>
 											<div className="text-lg text-slate-600 dark:text-slate-400 dark:text-slate-400">
-												Feels like {weatherAPI.formatTemperature( currentWeather.main.feels_like )}
+												Feels like {weatherAPI.formatTemperature( currentWeather.main.feels_like,units )}
 											</div>
 										</div>
 									</div>
 									<div className="text-right space-y-2">
 										<div className="text-lg text-slate-700 dark:text-slate-300 dark:text-slate-300 font-medium">
-											H: {weatherAPI.formatTemperature( currentWeather.main.temp_max )}
+											H: {weatherAPI.formatTemperature( currentWeather.main.temp_max,units )}
 										</div>
 										<div className="text-lg text-slate-700 dark:text-slate-300 dark:text-slate-300 font-medium">
-											L: {weatherAPI.formatTemperature( currentWeather.main.temp_min )}
+											L: {weatherAPI.formatTemperature( currentWeather.main.temp_min,units )}
 										</div>
 									</div>
 								</div>
@@ -207,19 +208,19 @@ export default function Home () {
 									<div className="space-y-3">
 										<div className="flex justify-between">
 											<span className="text-slate-700 dark:text-slate-300 dark:text-slate-300">Current</span>
-											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.temp )}</span>
+											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.temp,units )}</span>
 										</div>
 										<div className="flex justify-between">
 											<span className="text-slate-700 dark:text-slate-300 dark:text-slate-300">Feels like</span>
-											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.feels_like )}</span>
+											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.feels_like,units )}</span>
 										</div>
 										<div className="flex justify-between">
 											<span className="text-slate-700 dark:text-slate-300 dark:text-slate-300">Min</span>
-											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.temp_min )}</span>
+											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.temp_min,units )}</span>
 										</div>
 										<div className="flex justify-between">
 											<span className="text-slate-700 dark:text-slate-300 dark:text-slate-300">Max</span>
-											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.temp_max )}</span>
+											<span className="font-semibold text-slate-800 dark:text-slate-200 dark:text-slate-200">{weatherAPI.formatTemperature( currentWeather.main.temp_max,units )}</span>
 										</div>
 									</div>
 								</div>
@@ -235,7 +236,7 @@ export default function Home () {
 									<div className="space-y-3">
 										<div className="flex justify-between">
 											<span className="text-slate-700 dark:text-slate-300">Speed</span>
-											<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatWindSpeed( currentWeather.wind.speed )}</span>
+											<span className="font-semibold text-slate-800 dark:text-slate-200">{weatherAPI.formatWindSpeed( currentWeather.wind.speed,units )}</span>
 										</div>
 										<div className="flex justify-between">
 											<span className="text-slate-700 dark:text-slate-300">Direction</span>
@@ -346,6 +347,7 @@ export default function Home () {
 							<ForecastPanel
 								forecast={currentForecast||[]}
 								loading={loading}
+								units={units}
 							/>
 						</div>
 					</div>

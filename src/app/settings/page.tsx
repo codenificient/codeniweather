@@ -1,11 +1,13 @@
 'use client'
 
 import { useTheme } from '@/contexts/ThemeContext'
+import { useWeather } from '@/contexts/WeatherContext'
 import { motion } from 'framer-motion'
 import { Bell,Globe,Palette,Settings,Shield } from 'lucide-react'
 
 export default function SettingsPage () {
 	const { theme,toggleTheme }=useTheme()
+	const { units,setUnits }=useWeather()
 
 	return (
 		<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -61,9 +63,13 @@ export default function SettingsPage () {
 							</div>
 							<div className="flex items-center justify-between">
 								<span className="text-slate-600 dark:text-slate-400">Temperature Unit</span>
-								<select className="text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded px-2 py-1">
-									<option>Celsius</option>
-									<option>Fahrenheit</option>
+								<select
+									value={units}
+									onChange={( e ) => setUnits( e.target.value as 'metric'|'imperial' )}
+									className="text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded px-2 py-1"
+								>
+									<option value="metric">Celsius (°C)</option>
+									<option value="imperial">Fahrenheit (°F)</option>
 								</select>
 							</div>
 						</div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { convertTemperature,getTemperatureUnit } from '@/lib/unit-conversion'
 import { DailyForecast } from '@/types/weather'
 import { motion } from 'framer-motion'
 import { Cloud } from 'lucide-react'
@@ -8,11 +9,13 @@ import React from 'react'
 interface ForecastPanelProps {
 	forecast: DailyForecast[]
 	loading?: boolean
+	units?: 'metric'|'imperial'
 }
 
 const ForecastPanel: React.FC<ForecastPanelProps>=( {
 	forecast,
 	loading=false,
+	units='metric',
 } ) => {
 	const getWeatherIcon=( weather: DailyForecast[ 'weather' ] ) => {
 		const iconCode=weather.icon
@@ -166,9 +169,9 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 
 						{/* Temperature range */}
 						<div className="text-lg font-bold text-slate-800 dark:text-slate-200 text-right">
-							<span className="text-slate-600 dark:text-slate-400">{Math.round( day.temp_min )}°</span>
+							<span className="text-slate-600 dark:text-slate-400">{Math.round( convertTemperature( day.temp_min,units ) )}{getTemperatureUnit( units ).replace( '°','' )}</span>
 							<span className="mx-1">/</span>
-							<span>{Math.round( day.temp_max )}°</span>
+							<span>{Math.round( convertTemperature( day.temp_max,units ) )}{getTemperatureUnit( units ).replace( '°','' )}</span>
 						</div>
 					</motion.div>
 				) )}

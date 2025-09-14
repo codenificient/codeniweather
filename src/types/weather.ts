@@ -103,4 +103,5 @@ export interface WeatherState {
 	forecastData: Record<string,DailyForecast[]>
 	loading: boolean
 	error: WeatherError|null
+	units: 'metric'|'imperial'
 }

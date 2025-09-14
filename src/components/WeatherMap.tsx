@@ -14,7 +14,7 @@ interface WeatherMapProps {
 }
 
 const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
-	const { weatherData,locations,currentLocation,addLocation,searchCities }=useWeather()
+	const { weatherData,locations,currentLocation,addLocation,removeLocation,searchCities }=useWeather()
 	const [ selectedLayer,setSelectedLayer ]=useState( 'temperature' )
 	const [ isSearching,setIsSearching ]=useState( false )
 	const [ searchQuery,setSearchQuery ]=useState( '' )
@@ -22,13 +22,15 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 	const [ showSearchResults,setShowSearchResults ]=useState( false )
 	const mapRef=useRef<Map|null>( null )
 
-	// Weather map layers using MapTiler Weather SDK
+	// Weather map layers using MapTiler Weather SDK - All 7 supported metrics
 	const weatherLayers=[
-		{ id: 'temperature',name: 'Temperature',description: 'Air temperature',unit: '°C',emoji: '🌡️',type: 'temperature' },
-		{ id: 'precipitation',name: 'Precipitation',description: 'Precipitation intensity',unit: 'mm/h',emoji: '🌧️',type: 'precipitation' },
-		{ id: 'pressure',name: 'Pressure',description: 'Atmospheric pressure',unit: 'hPa',emoji: '📊',type: 'pressure' },
-		{ id: 'wind',name: 'Wind',description: 'Wind speed and direction',unit: 'm/s',emoji: '💨',type: 'wind' },
-		{ id: 'radar',name: 'Radar',description: 'Weather radar',unit: 'dBZ',emoji: '📡',type: 'radar' }
+		{ id: 'temperature',name: 'Temperature',description: 'Air temperature at 2m above ground',unit: '°C',emoji: '🌡️',type: 'temperature',variableId: 'GFS_TEMPERATURE_2M' },
+		{ id: 'precipitation',name: 'Precipitation',description: 'Hourly precipitation rate',unit: 'mm/h',emoji: '🌧️',type: 'precipitation',variableId: 'GFS_PRECIPITATION_1H' },
+		{ id: 'pressure',name: 'Pressure',description: 'Atmospheric pressure at sea level',unit: 'hPa',emoji: '📊',type: 'pressure',variableId: 'GFS_PRESSURE_MSL' },
+		{ id: 'wind',name: 'Wind',description: 'Wind speed and direction at 10m',unit: 'm/s',emoji: '💨',type: 'wind',variableId: 'GFS_WIND_10M' },
+		{ id: 'radar',name: 'Radar',description: 'Composite radar reflectivity',unit: 'dBZ',emoji: '📡',type: 'radar',variableId: 'GFS_RADAR_COMPOSITE' },
+		{ id: 'clouds',name: 'Clouds',description: 'Total cloud coverage',unit: '%',emoji: '☁️',type: 'clouds',variableId: 'GFS_CLOUD_COVER_TOTAL' },
+		{ id: 'frozen-precipitation',name: 'Frozen Precipitation',description: 'Percentage of frozen precipitation',unit: '%',emoji: '❄️',type: 'frozen-precipitation',variableId: 'GFS_FROZEN_PRECIPITATION_PERCENT' }
 	]
 
 	// Get MapTiler API key
@@ -93,6 +95,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 		setIsSearching( true )
 		try {
 			const results=await searchCities( searchQuery )
+			console.log( 'Search results:',results )
 			setSearchResults( results )
 			setShowSearchResults( true )
 		} catch ( error ) {
@@ -109,7 +112,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			const location={
 				id: `${weatherData.coord.lat}_${weatherData.coord.lon}`,
 				name: weatherData.name,
-				country: weatherData.country,
+				country: weatherData.sys?.country||weatherData.country,
 				state: weatherData.state,
 				lat: weatherData.coord.lat,
 				lon: weatherData.coord.lon,
@@ -122,6 +125,21 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			setSearchResults( [] )
 		} catch ( error ) {
 			console.error( 'Error adding location:',error )
+		}
+	}
+
+	// Handle zooming to a location on the map
+	const handleZoomToLocation=( lat: number,lon: number ) => {
+		if ( mapRef.current&&( mapRef.current as any ).zoomToLocation ) {
+			; ( mapRef.current as any ).zoomToLocation( lat,lon )
+		}
+	}
+
+	// Handle removing a location
+	const handleRemoveLocation=( locationId: string ) => {
+		const location=locations.find( loc => loc.id===locationId )
+		if ( location&&window.confirm( `Are you sure you want to remove ${location.name} from your saved locations?` ) ) {
+			removeLocation( locationId )
 		}
 	}
 
@@ -186,7 +204,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 											{result.name}
 										</div>
 										<div className="text-xs text-slate-500 dark:text-slate-400">
-											{result.state&&`${result.state}, `}{result.country}
+											{result.state&&`${result.state}, `}{result.sys?.country||result.country}
 										</div>
 									</div>
 								) )}
@@ -203,18 +221,22 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 					</div>
 				</div>
 
-				<div className="flex flex-wrap gap-2">
+				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
 					{weatherLayers.map( ( layer ) => (
 						<button
 							key={layer.id}
-							onClick={() => setSelectedLayer( layer.id )}
-							className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedLayer===layer.id
-								? 'bg-blue-500 text-white shadow-lg'
-								:'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+							onClick={() => {
+								console.log( `🌧️ Weather layer button clicked: ${layer.id}` )
+								setSelectedLayer( layer.id )
+							}}
+							className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex flex-col items-center gap-1 ${selectedLayer===layer.id
+								? 'bg-blue-500 text-white shadow-lg drop-shadow-lg'
+								:'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 drop-shadow-md hover:drop-shadow-lg'
 								}`}
+							title={`${layer.description} (${layer.unit})`}
 						>
-							<span className="mr-2">{layer.emoji}</span>
-							{layer.name}
+							<span className="text-lg">{layer.emoji}</span>
+							<span className="text-center leading-tight">{layer.name}</span>
 						</button>
 					) )}
 				</div>
@@ -240,9 +262,22 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 
 				{/* Map Controls Overlay */}
 				<div className="absolute top-4 right-4 z-10">
-					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2">
-						<div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-							{weatherLayers.find( layer => layer.id===selectedLayer )?.description}
+					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3">
+						<div className="flex items-center gap-2 mb-2">
+							<span className="text-lg">
+								{weatherLayers.find( layer => layer.id===selectedLayer )?.emoji}
+							</span>
+							<div>
+								<div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+									{weatherLayers.find( layer => layer.id===selectedLayer )?.name}
+								</div>
+								<div className="text-xs text-slate-600 dark:text-slate-400">
+									{weatherLayers.find( layer => layer.id===selectedLayer )?.description}
+								</div>
+							</div>
+						</div>
+						<div className="text-xs text-slate-500 dark:text-slate-500">
+							Unit: {weatherLayers.find( layer => layer.id===selectedLayer )?.unit}
 						</div>
 					</div>
 				</div>
@@ -293,9 +328,29 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 										<h5 className="font-semibold text-slate-800 dark:text-slate-200">
 											{location.name}
 										</h5>
-										<span className="text-2xl">
-											{getWeatherIcon( weather?.weather?.[ 0 ]?.description||'clear sky' )}
-										</span>
+										<div className="flex items-center gap-2">
+											<span className="text-2xl">
+												{getWeatherIcon( weather?.weather?.[ 0 ]?.description||'clear sky' )}
+											</span>
+											<div className="flex gap-1">
+												{/* Zoom to location button */}
+												<button
+													onClick={() => handleZoomToLocation( location.lat,location.lon )}
+													className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+													title="Zoom to location on map"
+												>
+													<span className="text-sm">🔍</span>
+												</button>
+												{/* Remove location button */}
+												<button
+													onClick={() => handleRemoveLocation( location.id )}
+													className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+													title="Remove location"
+												>
+													<span className="text-sm">🗑️</span>
+												</button>
+											</div>
+										</div>
 									</div>
 									<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
 										<p><strong>Location:</strong> {location.name}</p>
@@ -326,11 +381,24 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 					<p>• <strong>Location Markers:</strong> Click markers to see detailed weather for your cities</p>
 					<p>• <strong>Map Navigation:</strong> Zoom and pan to explore different regions</p>
 					<p>• <strong>Weather Data:</strong> Real-time weather information from your saved locations</p>
-					<div className="mt-3 p-3 bg-blue-100 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg">
-						<p className="text-blue-800 dark:text-blue-200 text-sm">
-							<strong>ℹ️ Weather Layers:</strong> Weather layer functionality is being migrated to MapTiler. Layer buttons are currently for display purposes.
+					<p>• <strong>Weather Layers:</strong> Switch between 7 different weather metrics using the buttons above</p>
+					<p>• <strong>Location Controls:</strong> Use 🔍 to zoom to a location or 🗑️ to remove it from your list</p>
+
+					<div className="mt-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg">
+						<p className="text-green-800 dark:text-green-200 text-sm">
+							<strong>✅ Weather Layers Available:</strong> Temperature, Precipitation, Wind, Pressure, Radar, Clouds, and Frozen Precipitation layers are now active!
 						</p>
 					</div>
+
+					<div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+						{weatherLayers.map( ( layer ) => (
+							<div key={layer.id} className="flex items-center gap-2 text-xs">
+								<span className="text-sm">{layer.emoji}</span>
+								<span className="text-slate-600 dark:text-slate-400">{layer.name}</span>
+							</div>
+						) )}
+					</div>
+
 					{getMapTilerApiKey()==='YOUR_MAPTILER_API_KEY'&&(
 						<div className="mt-3 p-3 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg">
 							<p className="text-yellow-800 dark:text-yellow-200 text-sm">

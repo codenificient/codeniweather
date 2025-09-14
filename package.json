@@ -22,7 +22,9 @@
 		"test:forecast": "node tests/scripts/test-forecast-feature.js"
 	},
 	"dependencies": {
+		"@maptiler/client": "^2.5.1",
 		"@maptiler/sdk": "^3.7.0",
+		"@maptiler/weather": "^3.1.1",
 		"@radix-ui/react-slot": "^1.2.3",
 		"@types/leaflet": "^1.9.20",
 		"@types/node": "^20",

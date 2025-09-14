@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
           fixed top-0 left-0 h-screen w-20 glass-card-strong z-50
           flex flex-col shadow-xl rounded-r-2xl
           ${isOpen? 'translate-x-0':'-translate-x-full'}
-          lg:translate-x-0 lg:static lg:z-auto
+          lg:translate-x-0 lg:static lg:z-auto lg:h-full
         `}
 			>
 				{/* Header - Vertical */}

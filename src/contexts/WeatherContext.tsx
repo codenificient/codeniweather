@@ -12,6 +12,7 @@ interface WeatherContextType extends WeatherState {
 	refreshAllWeather: () => Promise<void>
 	clearError: () => void
 	getForecast: ( locationIdOrLocation: string|Location ) => Promise<DailyForecast[]>
+	setUnits: ( units: 'metric'|'imperial' ) => void
 }
 
 const WeatherContext=createContext<WeatherContextType|undefined>( undefined )
@@ -24,6 +25,7 @@ type WeatherAction=
 	|{ type: 'SET_WEATHER_DATA'; payload: { locationId: string; weather: WeatherData } }
 	|{ type: 'SET_FORECAST_DATA'; payload: { locationId: string; forecast: DailyForecast[] } }
 	|{ type: 'LOAD_LOCATIONS'; payload: Location[] }
+	|{ type: 'SET_UNITS'; payload: 'metric'|'imperial' }
 	|{ type: 'CLEAR_ERROR' }
 
 const weatherReducer=( state: WeatherState,action: WeatherAction ): WeatherState => {
@@ -42,6 +44,8 @@ const weatherReducer=( state: WeatherState,action: WeatherAction ): WeatherState
 			return { ...state,forecastData: { ...state.forecastData,[ action.payload.locationId ]: action.payload.forecast } }
 		case 'LOAD_LOCATIONS':
 			return { ...state,locations: action.payload }
+		case 'SET_UNITS':
+			return { ...state,units: action.payload }
 		case 'CLEAR_ERROR':
 			return { ...state,error: null }
 		default:
@@ -56,20 +60,29 @@ const initialState: WeatherState={
 	forecastData: {},
 	loading: false,
 	error: null,
+	units: 'metric'
 }
 
 export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { children } ) => {
 	const [ state,dispatch ]=useReducer( weatherReducer,initialState )
 	const weatherAPI=WeatherAPI.getInstance()
 
-	// Load saved locations on mount
+	// Load saved locations and units on mount
 	useEffect( () => {
 		const savedLocations=StorageService.getLocations()
+		console.log( 'Loading saved locations:',savedLocations )
 		dispatch( { type: 'LOAD_LOCATIONS',payload: savedLocations } )
+
+		// Load units from localStorage
+		const savedUnits=localStorage.getItem( 'codeniweather-units' ) as 'metric'|'imperial'|null
+		if ( savedUnits ) {
+			dispatch( { type: 'SET_UNITS',payload: savedUnits } )
+		}
 
 		// Fetch weather data for loaded locations
 		if ( savedLocations.length>0 ) {
 			savedLocations.forEach( location => {
+				console.log( `Fetching weather for location: ${location.name} (${location.lat}, ${location.lon})` )
 				fetchWeatherData( location )
 			} )
 		}
@@ -78,13 +91,24 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 	// Fetch weather data for a location
 	const fetchWeatherData=async ( location: Location ) => {
 		try {
-			const data=await weatherAPI.getCurrentWeather( location.lat,location.lon )
+			// Validate location coordinates before making API calls
+			if ( !location.lat||!location.lon||isNaN( location.lat )||isNaN( location.lon ) ) {
+				console.warn( `Invalid coordinates for location ${location.name}: lat=${location.lat}, lon=${location.lon}` )
+				return
+			}
+
+			const data=await weatherAPI.getCurrentWeather( location.lat,location.lon,state.units )
 			dispatch( { type: 'SET_WEATHER_DATA',payload: { locationId: location.id,weather: data } } )
 
 			// Also fetch forecast data
 			await getForecast( location )
 		} catch ( err: any ) {
-			dispatch( { type: 'SET_ERROR',payload: { message: err.message,code: 'FETCH_ERROR' } } )
+			// Only show error to user if it's not a geocoding issue
+			if ( !err.message.includes( 'Nothing to geocode' )&&!err.message.includes( 'Invalid coordinates' ) ) {
+				dispatch( { type: 'SET_ERROR',payload: { message: err.message,code: 'FETCH_ERROR' } } )
+			} else {
+				console.warn( `Geocoding issue for location ${location.name}:`,err.message )
+			}
 		}
 	}
 
@@ -102,6 +126,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 			StorageService.addLocation( location )
 			dispatch( { type: 'ADD_LOCATION',payload: location } )
 		} catch ( err: any ) {
+			console.error( 'Error adding location:',err )
 			dispatch( { type: 'SET_ERROR',payload: { message: err.message,code: 'ADD_LOCATION_ERROR' } } )
 		} finally {
 			dispatch( { type: 'SET_LOADING',payload: false } )
@@ -119,7 +144,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		if ( !query.trim() ) return []
 
 		try {
-			return await weatherAPI.searchCities( query )
+			return await weatherAPI.searchCities( query,state.units )
 		} catch ( err: any ) {
 			dispatch( { type: 'SET_ERROR',payload: { message: err.message,code: 'SEARCH_ERROR' } } )
 			return []
@@ -181,6 +206,15 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		dispatch( { type: 'CLEAR_ERROR' } )
 	}
 
+	// Set units
+	const setUnits=( units: 'metric'|'imperial' ) => {
+		dispatch( { type: 'SET_UNITS',payload: units } )
+		// Save to localStorage
+		localStorage.setItem( 'codeniweather-units',units )
+		// Refresh all weather data with new units
+		refreshAllWeather()
+	}
+
 	const value: WeatherContextType={
 		...state,
 		addLocation,
@@ -189,6 +223,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		refreshAllWeather,
 		clearError,
 		getForecast,
+		setUnits,
 	}
 
 	return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>

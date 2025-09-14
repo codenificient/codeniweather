@@ -1,5 +1,6 @@
 import { DailyForecast,ForecastData,WeatherData } from '@/types/weather'
 import axios from 'axios'
+import { GeocodingAPI,MapTilerLocation } from './geocoding-api'
 
 const API_KEY=process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY||'your-api-key-here'
 const BASE_URL='https://api.openweathermap.org/data/2.5'
@@ -20,7 +21,7 @@ export class WeatherAPI {
 		return WeatherAPI.instance
 	}
 
-	async getCurrentWeather ( lat: number,lon: number ): Promise<WeatherData> {
+	async getCurrentWeather ( lat: number,lon: number,units: 'metric'|'imperial'='metric' ): Promise<WeatherData> {
 		// Validate API key
 		if ( !this.apiKey||this.apiKey==='your-api-key-here' ) {
 			throw new Error( 'OpenWeatherMap API key is not configured. Please check your .env.local file.' )
@@ -32,31 +33,31 @@ export class WeatherAPI {
 					lat,
 					lon,
 					appid: this.apiKey,
-					units: 'metric',
+					units: units,
 				},
 			} )
 
 			const weatherData=response.data
 
-			// Get state information via reverse geocoding
+			// Get location information via MapTiler reverse geocoding
 			try {
-				const reverseGeocodeResponse=await axios.get( `https://api.openweathermap.org/geo/1.0/reverse`,{
-					params: {
-						lat,
-						lon,
-						limit: 1,
-						appid: this.apiKey,
-					},
-				} )
+				const geocodingApi=GeocodingAPI.getInstance()
+				const locationInfo=await geocodingApi.reverseGeocode( lat,lon )
 
-				if ( reverseGeocodeResponse.data&&reverseGeocodeResponse.data.length>0 ) {
-					const locationInfo=reverseGeocodeResponse.data[ 0 ]
+				if ( locationInfo ) {
+					// Update weather data with MapTiler geocoding information
+					weatherData.name=locationInfo.name
+					weatherData.country=locationInfo.country
+					weatherData.sys.country=locationInfo.country
 					if ( locationInfo.state ) {
 						weatherData.state=locationInfo.state
 					}
+				} else {
+					console.warn( `No location information found for coordinates: ${lat}, ${lon}` )
 				}
 			} catch ( reverseError ) {
-				console.warn( 'Failed to get state information via reverse geocoding:',reverseError )
+				console.warn( 'Failed to get location information via MapTiler reverse geocoding:',reverseError )
+				// Don't throw error here, just log it and continue with weather data
 			}
 
 			return weatherData
@@ -91,39 +92,37 @@ export class WeatherAPI {
 		}
 	}
 
-	async searchCities ( query: string ): Promise<WeatherData[]> {
+	async searchCities ( query: string,units: 'metric'|'imperial'='metric' ): Promise<WeatherData[]> {
 		// Validate API key
 		if ( !this.apiKey||this.apiKey==='your-api-key-here' ) {
 			throw new Error( 'OpenWeatherMap API key is not configured. Please check your .env.local file.' )
 		}
 
 		try {
-			console.log( `Searching for cities: "${query}"` )
+			console.log( `Searching for cities using MapTiler: "${query}"` )
 
-			// Use the new geocoding API for city search
-			const response=await axios.get( `https://api.openweathermap.org/geo/1.0/direct`,{
-				params: {
-					q: query,
-					limit: 5,
-					appid: this.apiKey,
-				},
-			} )
+			// Use MapTiler geocoding API for city search
+			const geocodingApi=GeocodingAPI.getInstance()
+			const locations=await geocodingApi.searchCities( query )
 
-			const locations=response.data||[]
-			console.log( `Found ${locations.length} locations for "${query}"` )
+			console.log( `Found ${locations.length} locations using MapTiler for "${query}"` )
 
 			if ( locations.length===0 ) {
 				return []
 			}
 
-			// Convert geocoding results to weather data by fetching weather for each location
-			const weatherPromises=locations.map( async ( location: any ) => {
+			// Convert MapTiler geocoding results to weather data by fetching weather for each location
+			const weatherPromises=locations.map( async ( location: MapTilerLocation ) => {
 				try {
-					const weatherData=await this.getCurrentWeather( location.lat,location.lon )
-					// Add state information from geocoding API to weather data
+					const weatherData=await this.getCurrentWeather( location.lat,location.lon,units )
+					// Add location information from MapTiler geocoding to weather data
+					weatherData.name=location.name
+					weatherData.country=location.country
 					if ( location.state ) {
 						weatherData.state=location.state
 					}
+					// Update sys.country to match the geocoding result
+					weatherData.sys.country=location.country
 					return weatherData
 				} catch ( error ) {
 					console.warn( `Failed to fetch weather for ${location.name}:`,error )
@@ -134,21 +133,21 @@ export class WeatherAPI {
 			const weatherResults=await Promise.all( weatherPromises )
 			const validResults=weatherResults.filter( ( data ) => data!==null ) as WeatherData[]
 
-			console.log( `Successfully fetched weather for ${validResults.length} locations` )
+			console.log( `Successfully fetched weather for ${validResults.length} locations using MapTiler` )
 			return validResults
 		} catch ( error: any ) {
-			console.error( 'City search error:',error.response?.data||error.message )
+			console.error( 'City search error using MapTiler:',error.response?.data||error.message )
 
 			// Provide more specific error messages
-			if ( error.response?.status===401 ) {
-				throw new Error( 'Invalid API key. Please check your OpenWeatherMap API key in .env.local' )
-			} else if ( error.response?.status===429 ) {
-				throw new Error( 'API rate limit exceeded. Please try again later.' )
+			if ( error.message.includes( 'MapTiler API key' ) ) {
+				throw new Error( 'Invalid MapTiler API key. Please check your .env.local file.' )
+			} else if ( error.message.includes( 'rate limit' ) ) {
+				throw new Error( 'MapTiler API rate limit exceeded. Please try again later.' )
 			} else if ( error.code==='ENOTFOUND'||error.code==='ECONNREFUSED' ) {
 				throw new Error( 'Network error. Please check your internet connection.' )
 			}
 
-			throw new Error( `Failed to search cities: ${error.response?.data?.message||error.message}` )
+			throw new Error( `Failed to search cities using MapTiler: ${error.message}` )
 		}
 	}
 
@@ -156,11 +155,19 @@ export class WeatherAPI {
 		return `https://openweathermap.org/img/wn/${iconCode}@2x.png`
 	}
 
-	formatTemperature ( temp: number ): string {
+	formatTemperature ( temp: number,units: 'metric'|'imperial'='metric' ): string {
+		if ( units==='imperial' ) {
+			const fahrenheit=Math.round( ( temp*9/5+32 )*10 )/10
+			return `${fahrenheit}°F`
+		}
 		return `${Math.round( temp )}°C`
 	}
 
-	formatWindSpeed ( speed: number ): string {
+	formatWindSpeed ( speed: number,units: 'metric'|'imperial'='metric' ): string {
+		if ( units==='imperial' ) {
+			const mph=Math.round( ( speed*3.6*0.621371 )*10 )/10
+			return `${mph} mph`
+		}
 		return `${Math.round( speed*3.6 )} km/h`
 	}
 

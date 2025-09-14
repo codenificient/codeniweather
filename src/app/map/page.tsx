@@ -22,11 +22,11 @@ export default function MapPage () {
 	const { locations,weatherData }=useWeather()
 
 	return (
-		<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+		<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">
 			<motion.div
 				initial={{ opacity: 0,y: 20 }}
 				animate={{ opacity: 1,y: 0 }}
-				className="space-y-8"
+				className="space-y-8 h-full"
 			>
 				{/* Header */}
 				<div className="text-center">

@@ -7,14 +7,14 @@ import { AnimatePresence,motion } from 'framer-motion'
 // Icons replaced with emojis
 
 export default function CitiesPage () {
-	const { locations,weatherData,loading,removeLocation }=useWeather()
+	const { locations,weatherData,loading,removeLocation,units }=useWeather()
 
 	const allLocations=locations
 
 	if ( loading&&allLocations.length===0 ) {
 		return (
-			<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-				<div className="flex justify-center items-center py-20">
+			<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">
+				<div className="flex justify-center items-center py-20 h-full">
 					<LoadingSpinner size="lg" text="Loading cities..." />
 				</div>
 			</div>
@@ -22,11 +22,11 @@ export default function CitiesPage () {
 	}
 
 	return (
-		<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+		<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">
 			<motion.div
 				initial={{ opacity: 0,y: 20 }}
 				animate={{ opacity: 1,y: 0 }}
-				className="space-y-8"
+				className="space-y-8 h-full"
 			>
 				{/* Header */}
 				<div className="text-center">
@@ -46,6 +46,7 @@ export default function CitiesPage () {
 								const weather=weatherData[ location.id ]
 								const isCurrentLocation=location.isCurrentLocation||false
 
+
 								return weather? (
 									<motion.div
 										key={location.id}
@@ -60,9 +61,39 @@ export default function CitiesPage () {
 											location={location}
 											isCurrentLocation={isCurrentLocation}
 											onRemove={() => removeLocation( location.id )}
+											units={units}
 										/>
 									</motion.div>
-								):null
+								):(
+									// Show loading state for locations without weather data
+									<motion.div
+										key={location.id}
+										initial={{ opacity: 0,y: 20 }}
+										animate={{ opacity: 1,y: 0 }}
+										transition={{ delay: index*0.1 }}
+										className="glass-card rounded-xl p-6 animate-pulse"
+									>
+										<div className="flex items-center justify-between mb-4">
+											<h3 className="font-semibold text-slate-800 dark:text-slate-200">
+												{location.name}
+											</h3>
+											<span className="text-2xl">⏳</span>
+										</div>
+										<div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+											<p><strong>Location:</strong> {location.name}</p>
+											{location.state&&(
+												<p><strong>State/Province:</strong> {location.state}</p>
+											)}
+											<p><strong>Country:</strong> {location.country}</p>
+											<p><strong>Coordinates:</strong> {location.lat?.toFixed( 4 )}, {location.lon?.toFixed( 4 )}</p>
+											<div className="mt-4 text-center">
+												<span className="text-slate-500 dark:text-slate-400 text-sm">
+													Loading weather data...
+												</span>
+											</div>
+										</div>
+									</motion.div>
+								)
 							} )}
 						</AnimatePresence>
 					</div>
