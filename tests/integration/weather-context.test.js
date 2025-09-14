@@ -438,3 +438,4 @@ describe("WeatherContext Integration Tests", () => {
 
 console.log("✅ WeatherContext Integration Tests - Ready to run");
 console.log("Run with: npm test tests/integration/weather-context.test.js");
+

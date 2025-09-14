@@ -1,183 +1,216 @@
 'use client'
 
 import { useWeather } from '@/contexts/WeatherContext'
-import L from 'leaflet'
+import { Map } from '@maptiler/sdk'
+import '@maptiler/sdk/dist/maptiler-sdk.css'
 import dynamic from 'next/dynamic'
-import { useEffect,useState } from 'react'
-import { useMap } from 'react-leaflet'
+import { useRef,useState } from 'react'
 
-// Dynamically import Leaflet components to avoid SSR issues
-const MapContainer=dynamic( () => import( 'react-leaflet' ).then( mod => mod.MapContainer ),{ ssr: false } )
-const TileLayer=dynamic( () => import( 'react-leaflet' ).then( mod => mod.TileLayer ),{ ssr: false } )
-const Marker=dynamic( () => import( 'react-leaflet' ).then( mod => mod.Marker ),{ ssr: false } )
-const Popup=dynamic( () => import( 'react-leaflet' ).then( mod => mod.Popup ),{ ssr: false } )
-
-// Component to handle weather layer updates
-const WeatherLayerUpdater=( { selectedLayer }: { selectedLayer: string } ) => {
-	const map=useMap()
-
-	useEffect( () => {
-		if ( !map ) return
-
-		// Remove existing weather layers
-		map.eachLayer( ( layer: any ) => {
-			if ( layer.isWeatherLayer ) {
-				map.removeLayer( layer )
-			}
-		} )
-
-		// Add new weather layer
-		const apiKey=process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
-		if ( apiKey ) {
-			const weatherLayer=L.tileLayer(
-				`https://maps.openweathermap.org/maps/2.0/weather/${selectedLayer}/{z}/{x}/{y}?appid=${apiKey}&opacity=0.8`,
-				{
-					attribution: '© OpenWeatherMap',
-					opacity: 0.8
-				}
-			)
-				// Add custom property to identify weather layers
-				; ( weatherLayer as any ).isWeatherLayer=true
-			weatherLayer.addTo( map )
-		}
-	},[ map,selectedLayer ] )
-
-	return null
-}
-
-// Component to handle map resize
-const MapResizeHandler=() => {
-	const map=useMap()
-
-	useEffect( () => {
-		if ( !map ) return
-
-		// Trigger resize when component mounts
-		setTimeout( () => {
-			map.invalidateSize()
-		},100 )
-
-		// Handle window resize
-		const handleResize=() => {
-			map.invalidateSize()
-		}
-
-		window.addEventListener( 'resize',handleResize )
-		return () => window.removeEventListener( 'resize',handleResize )
-	},[ map ] )
-
-	return null
-}
-
-// Component to fit map bounds to show all locations
-const MapBoundsFitter=( { locations }: { locations: any[] } ) => {
-	const map=useMap()
-
-	useEffect( () => {
-		if ( !map||locations.length<2 ) return
-
-		// Create bounds from all locations
-		const bounds=L.latLngBounds(
-			locations.map( loc => [ loc.lat,loc.lon ] )
-		)
-
-		// Fit map to bounds with padding
-		setTimeout( () => {
-			map.fitBounds( bounds,{ padding: [ 20,20 ] } )
-		},100 )
-	},[ map,locations ] )
-
-	return null
-}
+// Dynamically import the map component to avoid SSR issues
+const MapComponent=dynamic( () => import( './MapComponent' ),{ ssr: false } )
 
 interface WeatherMapProps {
 	className?: string
 }
 
 const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
-	const { weatherData,locations }=useWeather()
-	const [ selectedLayer,setSelectedLayer ]=useState( 'TA2' ) // Default to temperature
+	const { weatherData,locations,currentLocation,addLocation,searchCities }=useWeather()
+	const [ selectedLayer,setSelectedLayer ]=useState( 'temperature' )
+	const [ isSearching,setIsSearching ]=useState( false )
+	const [ searchQuery,setSearchQuery ]=useState( '' )
+	const [ searchResults,setSearchResults ]=useState<any[]>( [] )
+	const [ showSearchResults,setShowSearchResults ]=useState( false )
+	const mapRef=useRef<Map|null>( null )
 
-	// Calculate map center and zoom based on locations
+	// Weather map layers using MapTiler Weather SDK
+	const weatherLayers=[
+		{ id: 'temperature',name: 'Temperature',description: 'Air temperature',unit: '°C',emoji: '🌡️',type: 'temperature' },
+		{ id: 'precipitation',name: 'Precipitation',description: 'Precipitation intensity',unit: 'mm/h',emoji: '🌧️',type: 'precipitation' },
+		{ id: 'pressure',name: 'Pressure',description: 'Atmospheric pressure',unit: 'hPa',emoji: '📊',type: 'pressure' },
+		{ id: 'wind',name: 'Wind',description: 'Wind speed and direction',unit: 'm/s',emoji: '💨',type: 'wind' },
+		{ id: 'radar',name: 'Radar',description: 'Weather radar',unit: 'dBZ',emoji: '📡',type: 'radar' }
+	]
+
+	// Get MapTiler API key
+	const getMapTilerApiKey=() => {
+		return process.env.NEXT_PUBLIC_MAPTILER_API_KEY||'YOUR_MAPTILER_API_KEY'
+	}
+
+	// Calculate map center and zoom based on current location or saved locations
 	const getMapCenterAndZoom=() => {
-		if ( locations.length===0 ) {
-			return { center: [ 40.7128,-74.0060 ] as [ number,number ],zoom: 4 } // Default to New York
+		// Priority 1: Use current location if available
+		if ( currentLocation ) {
+			return {
+				center: [ currentLocation.lon,currentLocation.lat ] as [ number,number ],
+				zoom: 10
+			}
 		}
 
-		if ( locations.length===1 ) {
-			// Single location - center on it with zoom 8
+		// Priority 2: Use first saved location if available
+		if ( locations.length>0 ) {
 			return {
-				center: [ locations[ 0 ].lat,locations[ 0 ].lon ] as [ number,number ],
+				center: [ locations[ 0 ].lon,locations[ 0 ].lat ] as [ number,number ],
 				zoom: 8
 			}
 		}
 
-		// Multiple locations - calculate bounds
-		const lats=locations.map( loc => loc.lat )
-		const lons=locations.map( loc => loc.lon )
-
-		const minLat=Math.min( ...lats )
-		const maxLat=Math.max( ...lats )
-		const minLon=Math.min( ...lons )
-		const maxLon=Math.max( ...lons )
-
-		// Calculate center
-		const centerLat=( minLat+maxLat )/2
-		const centerLon=( minLon+maxLon )/2
-
-		// Calculate appropriate zoom level based on bounds
-		const latDiff=maxLat-minLat
-		const lonDiff=maxLon-minLon
-		const maxDiff=Math.max( latDiff,lonDiff )
-
-		let zoom=4
-		if ( maxDiff>10 ) zoom=3
-		else if ( maxDiff>5 ) zoom=4
-		else if ( maxDiff>2 ) zoom=5
-		else if ( maxDiff>1 ) zoom=6
-		else if ( maxDiff>0.5 ) zoom=7
-		else zoom=8
-
+		// Default: Center on a global view
 		return {
-			center: [ centerLat,centerLon ] as [ number,number ],
-			zoom
+			center: [ 0,20 ] as [ number,number ],
+			zoom: 2
 		}
 	}
 
 	const mapConfig=getMapCenterAndZoom()
 
-	// Weather map layers from OpenWeatherMap API
-	const weatherLayers=[
-		{ id: 'TA2',name: 'Temperature',description: 'Air temperature at 2m height',unit: '°C',emoji: '🌡️' },
-		{ id: 'PR0',name: 'Precipitation',description: 'Precipitation intensity',unit: 'mm/s',emoji: '🌧️' },
-		{ id: 'WS10',name: 'Wind Speed',description: 'Wind speed at 10m height',unit: 'm/s',emoji: '💨' },
-		{ id: 'WND',name: 'Wind Direction',description: 'Wind speed and direction',unit: 'm/s',emoji: '🧭' },
-		{ id: 'APM',name: 'Pressure',description: 'Atmospheric pressure',unit: 'hPa',emoji: '📊' },
-		{ id: 'HRD0',name: 'Humidity',description: 'Relative humidity',unit: '%',emoji: '💧' },
-		{ id: 'CL',name: 'Cloudiness',description: 'Cloud coverage',unit: '%',emoji: '☁️' },
-		{ id: 'SD0',name: 'Snow Depth',description: 'Depth of snow',unit: 'm',emoji: '❄️' }
-	]
+	// Get weather icon based on weather condition
+	const getWeatherIcon=( condition: string ) => {
+		const conditionMap: { [ key: string ]: string }={
+			'clear sky': '☀️',
+			'few clouds': '🌤️',
+			'scattered clouds': '⛅',
+			'broken clouds': '☁️',
+			'shower rain': '🌦️',
+			'rain': '🌧️',
+			'thunderstorm': '⛈️',
+			'snow': '❄️',
+			'mist': '🌫️',
+			'fog': '🌫️',
+			'haze': '🌫️'
+		}
+		return conditionMap[ condition.toLowerCase() ]||'🌤️'
+	}
 
-	// Generate OpenWeatherMap tile URL
-	const getWeatherTileUrl=( layer: string ) => {
-		const apiKey=process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
-		if ( !apiKey ) return ''
+	// Get weather data for a location
+	const getLocationWeather=( locationId: string ) => {
+		return weatherData[ locationId ]
+	}
 
-		return `https://maps.openweathermap.org/maps/2.0/weather/${layer}/{z}/{x}/{y}?appid=${apiKey}&opacity=0.8`
+	// Handle search functionality
+	const handleSearch=async () => {
+		if ( !searchQuery.trim() ) return
+
+		setIsSearching( true )
+		try {
+			const results=await searchCities( searchQuery )
+			setSearchResults( results )
+			setShowSearchResults( true )
+		} catch ( error ) {
+			console.error( 'Search error:',error )
+		} finally {
+			setIsSearching( false )
+		}
+	}
+
+	// Handle adding a location from search results
+	const handleAddLocation=async ( weatherData: any ) => {
+		try {
+			// Convert WeatherData to Location format
+			const location={
+				id: `${weatherData.coord.lat}_${weatherData.coord.lon}`,
+				name: weatherData.name,
+				country: weatherData.country,
+				state: weatherData.state,
+				lat: weatherData.coord.lat,
+				lon: weatherData.coord.lon,
+				isCurrentLocation: false
+			}
+
+			await addLocation( location )
+			setShowSearchResults( false )
+			setSearchQuery( '' )
+			setSearchResults( [] )
+		} catch ( error ) {
+			console.error( 'Error adding location:',error )
+		}
+	}
+
+	// Handle search input change
+	const handleSearchInputChange=( e: React.ChangeEvent<HTMLInputElement> ) => {
+		setSearchQuery( e.target.value )
+		if ( e.target.value.trim()==='' ) {
+			setShowSearchResults( false )
+			setSearchResults( [] )
+		}
+	}
+
+	// Handle search on Enter key
+	const handleSearchKeyPress=( e: React.KeyboardEvent<HTMLInputElement> ) => {
+		if ( e.key==='Enter' ) {
+			handleSearch()
+		}
 	}
 
 	return (
 		<div className={`w-full ${className}`}>
-			{/* Layer Selection */}
+			{/* Layer Selection and Search */}
 			<div className="mb-6">
+				<div className="flex justify-between items-center mb-4">
+					<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+						Weather Map Layers
+					</h3>
+
+					{/* Search Controls */}
+					<div className="relative">
+						<div className="flex gap-2">
+							<input
+								type="text"
+								placeholder="Search for a city..."
+								value={searchQuery}
+								onChange={handleSearchInputChange}
+								onKeyPress={handleSearchKeyPress}
+								className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+							/>
+							<button
+								onClick={handleSearch}
+								disabled={isSearching||!searchQuery.trim()}
+								className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-400 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+							>
+								{isSearching? '🔍':'🔍'}
+							</button>
+						</div>
+
+						{/* Search Results Dropdown */}
+						{showSearchResults&&searchResults.length>0&&(
+							<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+								<div className="p-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+									Search Results ({searchResults.length})
+								</div>
+								{searchResults.map( ( result,index ) => (
+									<div
+										key={index}
+										onClick={() => handleAddLocation( result )}
+										className="p-3 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors duration-200 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
+									>
+										<div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+											{result.name}
+										</div>
+										<div className="text-xs text-slate-500 dark:text-slate-400">
+											{result.state&&`${result.state}, `}{result.country}
+										</div>
+									</div>
+								) )}
+							</div>
+						)}
+
+						{showSearchResults&&searchResults.length===0&&searchQuery.trim()&&(
+							<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 p-3">
+								<div className="text-sm text-slate-500 dark:text-slate-400">
+									No locations found for &quot;{searchQuery}&quot;
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+
 				<div className="flex flex-wrap gap-2">
 					{weatherLayers.map( ( layer ) => (
 						<button
 							key={layer.id}
 							onClick={() => setSelectedLayer( layer.id )}
-							className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${selectedLayer===layer.id
-								? 'btn-primary'
-								:'btn-glass hover:glass-card-strong'
+							className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedLayer===layer.id
+								? 'bg-blue-500 text-white shadow-lg'
+								:'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
 								}`}
 						>
 							<span className="mr-2">{layer.emoji}</span>
@@ -185,149 +218,98 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 						</button>
 					) )}
 				</div>
-				<div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-					{weatherLayers.find( l => l.id===selectedLayer )?.description} ({weatherLayers.find( l => l.id===selectedLayer )?.unit})
-				</div>
 			</div>
 
-			{/* Interactive Weather Map */}
+			{/* Map Container */}
 			<div className="relative">
-				<div className="w-full h-[500px] sm:h-[600px] lg:h-[700px] glass-card-strong rounded-xl overflow-hidden">
-					<MapContainer
+				<div className="h-[48rem] w-full rounded-xl overflow-hidden shadow-lg">
+					<MapComponent
+						apiKey={getMapTilerApiKey()}
 						center={mapConfig.center}
 						zoom={mapConfig.zoom}
-						style={{ height: '100%',width: '100%' }}
-						className="rounded-xl"
-					>
-						{/* Base Map Layer */}
-						<TileLayer
-							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-						/>
+						selectedLayer={selectedLayer}
+						weatherLayers={weatherLayers}
+						locations={locations}
+						currentLocation={currentLocation}
+						weatherData={weatherData}
+						onMapReady={( map ) => {
+							mapRef.current=map
+						}}
+					/>
+				</div>
 
-						{/* Weather Layer Updater */}
-						<WeatherLayerUpdater selectedLayer={selectedLayer} />
-
-						{/* Map Resize Handler */}
-						<MapResizeHandler />
-
-						{/* Map Bounds Fitter */}
-						<MapBoundsFitter locations={locations} />
-
-						{/* Location Markers */}
-						{locations.map( ( location ) => {
-							const weather=weatherData[ location.id ]
-							if ( !weather ) return null
-
-							return (
-								<Marker
-									key={location.id}
-									position={[ location.lat,location.lon ]}
-								>
-									<Popup>
-										<div className="p-2">
-											<h3 className="font-bold text-slate-800 dark:text-slate-200">
-												{location.name}
-											</h3>
-											{location.state&&(
-												<p className="text-sm text-slate-600 dark:text-slate-400">
-													{location.state}, {location.country}
-												</p>
-											)}
-											{!location.state&&(
-												<p className="text-sm text-slate-600 dark:text-slate-400">
-													{location.country}
-												</p>
-											)}
-											<div className="mt-2 space-y-1">
-												<div className="flex items-center justify-between text-sm">
-													<span className="text-slate-600 dark:text-slate-400">🌡️ Temp</span>
-													<span className="font-semibold text-slate-800 dark:text-slate-200">
-														{weather.main.temp.toFixed( 1 )}°C
-													</span>
-												</div>
-												<div className="flex items-center justify-between text-sm">
-													<span className="text-slate-600 dark:text-slate-400">💧 Humidity</span>
-													<span className="font-semibold text-slate-800 dark:text-slate-200">
-														{weather.main.humidity}%
-													</span>
-												</div>
-												<div className="flex items-center justify-between text-sm">
-													<span className="text-slate-600 dark:text-slate-400">💨 Wind</span>
-													<span className="font-semibold text-slate-800 dark:text-slate-200">
-														{weather.wind.speed} m/s
-													</span>
-												</div>
-											</div>
-										</div>
-									</Popup>
-								</Marker>
-							)
-						} )}
-					</MapContainer>
-
-					{/* Map Controls */}
-					<div className="absolute top-4 right-4 glass-card rounded-lg p-3 z-[1000]">
-						<div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Current Layer</div>
-						<div className="flex items-center space-x-2">
-							<span className="text-lg">
-								{weatherLayers.find( l => l.id===selectedLayer )?.emoji}
-							</span>
-							<span className="text-sm font-medium text-slate-800 dark:text-slate-200">
-								{weatherLayers.find( l => l.id===selectedLayer )?.name}
-							</span>
+				{/* Map Controls Overlay */}
+				<div className="absolute top-4 right-4 z-10">
+					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2">
+						<div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+							{weatherLayers.find( layer => layer.id===selectedLayer )?.description}
 						</div>
 					</div>
 				</div>
+
 			</div>
 
 			{/* Location Cards */}
-			{locations.length>0&&(
+			{( locations.length>0||currentLocation )&&(
 				<div className="mt-6">
-					<h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">Your Locations</h4>
+					<h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+						Your Locations
+					</h4>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						{locations.map( ( location ) => {
-							const weather=weatherData[ location.id ]
-							if ( !weather ) return null
+						{/* Current Location Card */}
+						{currentLocation&&(
+							<div className="glass-card rounded-xl p-4">
+								<div className="flex items-center justify-between mb-2">
+									<h5 className="font-semibold text-slate-800 dark:text-slate-200">
+										📍 Current Location
+									</h5>
+									<span className="text-2xl">
+										{getWeatherIcon( getLocationWeather( currentLocation.id )?.weather?.[ 0 ]?.description||'clear sky' )}
+									</span>
+								</div>
+								<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+									<p><strong>Location:</strong> {currentLocation.name}</p>
+									{currentLocation.state&&(
+										<p><strong>State/Province:</strong> {currentLocation.state}</p>
+									)}
+									<p><strong>Country:</strong> {currentLocation.country}</p>
+									<p><strong>Coordinates:</strong> {currentLocation.lat?.toFixed( 4 )}, {currentLocation.lon?.toFixed( 4 )}</p>
+									{getLocationWeather( currentLocation.id )&&(
+										<>
+											<p><strong>Temperature:</strong> {Math.round( getLocationWeather( currentLocation.id )!.main.temp )}°C</p>
+											<p><strong>Condition:</strong> {getLocationWeather( currentLocation.id )!.weather[ 0 ].description}</p>
+										</>
+									)}
+								</div>
+							</div>
+						)}
 
+						{/* Saved Locations Cards */}
+						{locations.map( ( location ) => {
+							const weather=getLocationWeather( location.id )
 							return (
-								<div key={location.id} className="glass-card rounded-xl p-4 hover:glass-card-strong transition-all duration-300 group">
-									<div className="flex items-center space-x-3 mb-3">
-										<div className="p-2 bg-blue-500/20 dark:bg-blue-400/20 rounded-xl">
-											<span className="text-blue-600 dark:text-blue-400 text-lg">📍</span>
-										</div>
-										<div>
-											<h5 className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{location.name}</h5>
-											{location.state&&(
-												<p className="text-sm text-slate-600 dark:text-slate-400">{location.state}, {location.country}</p>
-											)}
-											{!location.state&&(
-												<p className="text-sm text-slate-600 dark:text-slate-400">{location.country}</p>
-											)}
-										</div>
+								<div key={location.id} className="glass-card rounded-xl p-4">
+									<div className="flex items-center justify-between mb-2">
+										<h5 className="font-semibold text-slate-800 dark:text-slate-200">
+											{location.name}
+										</h5>
+										<span className="text-2xl">
+											{getWeatherIcon( weather?.weather?.[ 0 ]?.description||'clear sky' )}
+										</span>
 									</div>
-									<div className="space-y-2">
-										<div className="flex items-center justify-between text-sm">
-											<div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
-												<span>🌡️</span>
-												<span>Temperature</span>
-											</div>
-											<span className="font-semibold text-slate-800 dark:text-slate-200">{weather.main.temp.toFixed( 1 )}°C</span>
-										</div>
-										<div className="flex items-center justify-between text-sm">
-											<div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
-												<span>💧</span>
-												<span>Humidity</span>
-											</div>
-											<span className="font-semibold text-slate-800 dark:text-slate-200">{weather.main.humidity}%</span>
-										</div>
-										<div className="flex items-center justify-between text-sm">
-											<div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
-												<span>💨</span>
-												<span>Wind</span>
-											</div>
-											<span className="font-semibold text-slate-800 dark:text-slate-200">{weather.wind.speed} m/s</span>
-										</div>
+									<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+										<p><strong>Location:</strong> {location.name}</p>
+										{location.state&&(
+											<p><strong>State/Province:</strong> {location.state}</p>
+										)}
+										<p><strong>Country:</strong> {location.country}</p>
+										<p><strong>Coordinates:</strong> {location.lat?.toFixed( 4 )}, {location.lon?.toFixed( 4 )}</p>
+										{weather&&(
+											<>
+												<p><strong>Temperature:</strong> {Math.round( weather.main.temp )}°C</p>
+												<p><strong>Condition:</strong> {weather.weather[ 0 ].description}</p>
+											</>
+										)}
 									</div>
 								</div>
 							)
@@ -340,11 +322,22 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			<div className="mt-6 p-4 glass-card rounded-xl">
 				<h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Interactive Weather Map</h4>
 				<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-					<p>• <strong>Interactive Layers:</strong> Click buttons above to switch between weather visualizations</p>
-					<p>• <strong>Real-time Data:</strong> Live weather data from OpenWeatherMap API</p>
+					<p>• <strong>Base Map:</strong> Powered by MapTiler for high-quality mapping</p>
 					<p>• <strong>Location Markers:</strong> Click markers to see detailed weather for your cities</p>
 					<p>• <strong>Map Navigation:</strong> Zoom and pan to explore different regions</p>
-					<p>• <strong>Weather Layers:</strong> Temperature, precipitation, wind, pressure, humidity, clouds, and snow</p>
+					<p>• <strong>Weather Data:</strong> Real-time weather information from your saved locations</p>
+					<div className="mt-3 p-3 bg-blue-100 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg">
+						<p className="text-blue-800 dark:text-blue-200 text-sm">
+							<strong>ℹ️ Weather Layers:</strong> Weather layer functionality is being migrated to MapTiler. Layer buttons are currently for display purposes.
+						</p>
+					</div>
+					{getMapTilerApiKey()==='YOUR_MAPTILER_API_KEY'&&(
+						<div className="mt-3 p-3 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+							<p className="text-yellow-800 dark:text-yellow-200 text-sm">
+								<strong>⚠️ MapTiler API Key Required:</strong> Add your MapTiler API key to <code>NEXT_PUBLIC_MAPTILER_API_KEY</code> environment variable to enable full functionality.
+							</p>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

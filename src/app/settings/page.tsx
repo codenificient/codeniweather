@@ -1,9 +1,12 @@
 'use client'
 
+import { useTheme } from '@/contexts/ThemeContext'
 import { motion } from 'framer-motion'
 import { Bell,Globe,Palette,Settings,Shield } from 'lucide-react'
 
 export default function SettingsPage () {
+	const { theme,toggleTheme }=useTheme()
+
 	return (
 		<div className="w-full px-4 sm:px-6 lg:px-8 py-8">
 			<motion.div
@@ -42,9 +45,19 @@ export default function SettingsPage () {
 						<div className="space-y-2">
 							<div className="flex items-center justify-between">
 								<span className="text-slate-600 dark:text-slate-400">Dark Mode</span>
-								<div className="w-12 h-6 bg-slate-300 dark:bg-slate-600 rounded-full relative">
-									<div className="w-5 h-5 bg-white dark:bg-slate-200 rounded-full absolute top-0.5 left-0.5"></div>
-								</div>
+								<button
+									onClick={toggleTheme}
+									className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${theme==='dark'
+										? 'bg-blue-500 dark:bg-blue-600'
+										:'bg-slate-300 dark:bg-slate-600'
+										}`}
+									aria-label={`Switch to ${theme==='dark'? 'light':'dark'} mode`}
+								>
+									<div
+										className={`w-5 h-5 bg-white dark:bg-slate-200 rounded-full absolute top-0.5 transition-transform duration-200 ${theme==='dark'? 'right-0.5':'left-0.5'
+											}`}
+									></div>
+								</button>
 							</div>
 							<div className="flex items-center justify-between">
 								<span className="text-slate-600 dark:text-slate-400">Temperature Unit</span>

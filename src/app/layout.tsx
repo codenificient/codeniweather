@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata={
-	title: '🌤️ CodeniWeather - Weather Companion',
+	title: 'CodeniWeather - Weather Companion',
 	description: 'A modern weather app built with Next.js 14. Track weather for multiple locations with real-time updates.',
 	keywords: 'weather, forecast, temperature, locations, Next.js, React',
 	authors: [ { name: 'CodenificienT' } ],
@@ -18,7 +18,6 @@ export const metadata: Metadata={
 		apple: [
 			{ url: '/apple-touch-icon.png',sizes: '180x180',type: 'image/png' },
 		],
-		shortcut: '/favicon.ico',
 	},
 	manifest: '/site.webmanifest',
 }

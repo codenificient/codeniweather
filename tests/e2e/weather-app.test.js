@@ -305,3 +305,4 @@ describe("Weather App E2E Tests", () => {
 console.log("✅ Weather App E2E Tests - Ready to run");
 console.log("Run with: npm test tests/e2e/weather-app.test.js");
 console.log("Note: Make sure the app is running on http://localhost:3000");
+

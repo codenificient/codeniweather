@@ -189,3 +189,4 @@ className={`
 - **User Experience**: Ensure good contrast and readability
 
 The sidebar now properly updates when the theme changes, providing a consistent and responsive user experience across both light and dark themes.
+

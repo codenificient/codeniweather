@@ -167,3 +167,4 @@ describe("GeolocationService Unit Tests", () => {
 
 console.log("✅ GeolocationService Unit Tests - Ready to run");
 console.log("Run with: npm test tests/unit/geolocation.test.js");
+
