@@ -177,7 +177,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			{/* Layer Selection and Search */}
 			<div className="mb-6">
 				<div className="flex justify-between items-center mb-4">
-					<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+					<h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
 						Weather Map Layers
 					</h3>
 
@@ -302,7 +302,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			{( locations.length>0||currentLocation )&&(
 				<div className="mt-6">
 					<div className="flex items-center justify-between mb-4">
-						<h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+						<h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">
 							Your Locations
 						</h4>
 						{isZoomedToLocation&&(

@@ -89,8 +89,8 @@ export default function CitiesPage () {
 												<button
 													onClick={() => setCurrentLocation( location )}
 													className={`p-2 rounded-xl transition-all duration-300 ${isCurrentLocation
-															? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
-															:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
+														? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
+														:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
 														}`}
 													title={isCurrentLocation? 'Current location':'Set as current location'}
 												>
