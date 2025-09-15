@@ -6,13 +6,17 @@
 
 ## Technical Stack
 
-- **Framework**: Next.js 14.0.4 with App Router
+- **Framework**: Next.js 14.2.32 with App Router
 - **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 3.3.0
-- **Animations**: Framer Motion 10.16.16
+- **Styling**: Tailwind CSS 3.4.17
+- **Animations**: Framer Motion 10.18.0
 - **Icons**: Lucide React 0.294.0
-- **HTTP Client**: Axios 1.6.2
-- **Weather API**: OpenWeatherMap API
+- **HTTP Client**: Axios 1.12.2
+- **Maps**: MapTiler SDK 3.7.0 & Weather 3.1.1
+- **APIs**:
+  - OpenWeatherMap API (weather data)
+  - MapTiler API (maps, geocoding, weather layers)
+- **UI Components**: Radix UI, Shadcn/ui
 
 ## Core Features
 
@@ -37,13 +41,46 @@
 - **Multiple Locations**: Support for multiple saved locations
 - **Location Switching**: Easy switching between saved locations
 
-### 3. User Interface
+### 3. Interactive Weather Maps
+
+- **MapTiler Integration**: Interactive maps with weather overlays
+- **Weather Layers**: 7 different weather data layers
+  - Temperature (animated)
+  - Precipitation (rain, snow)
+  - Wind speed and direction
+  - Atmospheric pressure
+  - Cloud coverage
+  - Radar data
+  - Snow accumulation
+- **Animation Controls**: Play/pause/reset for weather data timeline
+- **State Aggregation**: Real-time weather data by US states
+- **Fullscreen Mode**: Dedicated fullscreen map experience
+- **Zoom Controls**: Zoom to specific locations
+
+### 4. Current Location Management
+
+- **Location Selection**: Set current location from saved cities
+- **Visual Indicators**: Clear indication of current location
+- **Cross-Page Sync**: Current location syncs across all pages
+- **Location Switching**: Easy switching between locations
+- **Persistent Storage**: Current location saved in localStorage
+
+### 5. Theme System
+
+- **Dark/Light Themes**: Complete theme implementation
+- **System Preference**: Automatic detection of user's theme preference
+- **Theme Persistence**: Theme choice saved across sessions
+- **Consistent Theming**: All components respect theme settings
+
+### 6. User Interface
 
 - **Responsive Design**: Mobile-first approach with desktop optimization
 - **Modern UI**: Clean, intuitive interface with smooth animations
 - **Weather Icons**: Visual representation of weather conditions
 - **Loading States**: Proper loading indicators and error handling
 - **Accessibility**: WCAG compliant design patterns
+- **Glass-morphism Design**: Modern glass-like UI elements
+- **Custom Branding**: Weather-themed favicon and consistent branding
 
 ## Data Models
 
