@@ -4,6 +4,11 @@
 	"description": "Your Personal Weather Companion",
 	"icons": [
 		{
+			"src": "/favicon.ico",
+			"sizes": "16x16 32x32",
+			"type": "image/x-icon"
+		},
+		{
 			"src": "/favicon.svg",
 			"sizes": "any",
 			"type": "image/svg+xml"

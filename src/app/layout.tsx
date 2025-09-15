@@ -18,11 +18,13 @@ export const metadata: Metadata={
 	authors: [ { name: 'CodenificienT' } ],
 	icons: {
 		icon: [
+			{ url: '/favicon.ico',sizes: 'any' },
 			{ url: '/favicon.svg',type: 'image/svg+xml' },
 		],
 		apple: [
 			{ url: '/favicon.svg',sizes: '180x180',type: 'image/svg+xml' },
 		],
+		shortcut: '/favicon.ico',
 	},
 	manifest: '/site.webmanifest',
 }
@@ -40,6 +42,11 @@ export default function RootLayout ( {
 } ) {
 	return (
 		<html lang="en" className={inter.variable}>
+			<head>
+				<link rel="icon" href="/favicon.ico" sizes="any" />
+				<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+				<link rel="apple-touch-icon" href="/favicon.svg" />
+			</head>
 			<body className={`${inter.className} font-sans`}>
 				{/* Animated background gradient orbs */}
 				<div className="gradient-orb-1"></div>
