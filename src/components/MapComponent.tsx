@@ -1,6 +1,7 @@
 'use client'
 
 import { useTheme } from '@/contexts/ThemeContext'
+import { CloudLayer,FrozenPrecipitationLayer } from '@/lib/custom-weather-layers'
 import { getWeatherIcon } from '@/lib/weather-icons'
 import { Map,Marker,NavigationControl,Popup } from '@maptiler/sdk'
 import { PrecipitationLayer,PressureLayer,RadarLayer,TemperatureLayer,WindLayer } from '@maptiler/weather'
@@ -52,27 +53,39 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	const toggleAnimation=() => {
 		if ( weatherLayerRef.current ) {
 			if ( isPlaying ) {
-				weatherLayerRef.current.pause()
+				// Stop animation by setting factor to 0
+				if ( typeof weatherLayerRef.current.animateByFactor==='function' ) {
+					weatherLayerRef.current.animateByFactor( 0 )
+				}
 				setIsPlaying( false )
 			} else {
-				weatherLayerRef.current.play()
+				// Resume animation by setting factor to 3600 (1 second = 1 hour)
+				if ( typeof weatherLayerRef.current.animateByFactor==='function' ) {
+					weatherLayerRef.current.animateByFactor( 3600 )
+				}
 				setIsPlaying( true )
 			}
 		}
 	}
 
 	const resetAnimation=() => {
-		if ( weatherLayerRef.current&&typeof weatherLayerRef.current.reset==='function' ) {
-			weatherLayerRef.current.reset()
+		if ( weatherLayerRef.current&&typeof weatherLayerRef.current.animateByFactor==='function' ) {
+			// Reset animation to beginning
+			weatherLayerRef.current.animateByFactor( 0 )
+			setTimeout( () => {
+				if ( weatherLayerRef.current&&typeof weatherLayerRef.current.animateByFactor==='function' ) {
+					weatherLayerRef.current.animateByFactor( 3600 )
+				}
+			},100 )
 			setAnimationTime( 0 )
 		}
 	}
 
 	const setAnimationTimeValue=( time: number ) => {
-		if ( weatherLayerRef.current&&typeof weatherLayerRef.current.setTime==='function' ) {
-			weatherLayerRef.current.setTime( time )
-			setAnimationTime( time )
-		}
+		// MapTiler weather layers don't have a direct setTime method
+		// This is a placeholder for future implementation
+		console.log( 'setAnimationTimeValue not implemented for MapTiler weather layers' )
+		setAnimationTime( time )
 	}
 
 	// Get weather icon based on weather condition and theme
@@ -158,11 +171,17 @@ const MapComponent: React.FC<MapComponentProps>=( {
 					} )
 					break
 				case 'clouds':
+					layer=new CloudLayer( {
+						opacity: 0.6,
+						smooth: true
+					} )
+					break
 				case 'frozen-precipitation':
-					// For clouds and frozen precipitation, we'll use a generic approach
-					// These might need custom implementation or different layer types
-					console.log( `Weather layer ${layerType} not yet implemented with MapTiler Weather SDK` )
-					return null
+					layer=new FrozenPrecipitationLayer( {
+						opacity: 0.7,
+						smooth: true
+					} )
+					break
 				default:
 					console.log( `Unknown weather layer type: ${layerType}` )
 					return null
@@ -545,7 +564,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* Time Animation Control Bar */}
-			{isAnimating&&(
+			{isAnimating&&weatherLayerRef.current&&(
 				<div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10">
 					<div className="flex items-center gap-4 mb-3">
 						<div className="flex items-center gap-2">
@@ -555,13 +574,15 @@ const MapComponent: React.FC<MapComponentProps>=( {
 						<div className="flex items-center gap-2">
 							<button
 								onClick={toggleAnimation}
-								className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
+								className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors disabled:opacity-50"
+								disabled={!weatherLayerRef.current}
 							>
 								{isPlaying? '⏸️ Pause':'▶️ Play'}
 							</button>
 							<button
 								onClick={resetAnimation}
-								className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm transition-colors"
+								className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm transition-colors disabled:opacity-50"
+								disabled={!weatherLayerRef.current}
 							>
 								🔄 Reset
 							</button>
