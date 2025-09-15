@@ -6,7 +6,7 @@ import { getWeatherIcon } from '@/lib/weather-icons'
 import { Map } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import dynamic from 'next/dynamic'
-import { useRef,useState } from 'react'
+import { useEffect,useRef,useState } from 'react'
 
 // Dynamically import the map component to avoid SSR issues
 const MapComponent=dynamic( () => import( './MapComponent' ),{ ssr: false } )
@@ -24,7 +24,18 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 	const [ searchResults,setSearchResults ]=useState<any[]>( [] )
 	const [ showSearchResults,setShowSearchResults ]=useState( false )
 	const [ isZoomedToLocation,setIsZoomedToLocation ]=useState( false )
+	const [ webglSupported,setWebglSupported ]=useState( true )
 	const mapRef=useRef<Map|null>( null )
+
+	// Check WebGL support on component mount
+	useEffect( () => {
+		const canvas=document.createElement( 'canvas' )
+		const gl=canvas.getContext( 'webgl' )||canvas.getContext( 'webgl2' )
+		if ( !gl ) {
+			console.warn( '⚠️ WebGL not supported - weather layers will be disabled' )
+			setWebglSupported( false )
+		}
+	},[] )
 
 	// Weather map layers using MapTiler Weather SDK - All 7 supported metrics
 	const weatherLayers=[
@@ -255,6 +266,21 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 				</div>
 			</div>
 
+			{/* WebGL Warning */}
+			{!webglSupported&&(
+				<div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+					<div className="flex items-center">
+						<span className="text-yellow-600 dark:text-yellow-400 text-lg mr-3">⚠️</span>
+						<div>
+							<h4 className="text-yellow-800 dark:text-yellow-200 font-semibold">WebGL Not Supported</h4>
+							<p className="text-yellow-700 dark:text-yellow-300 text-sm">
+								Weather layers are not available in your browser. The map will still work, but weather overlays are disabled.
+							</p>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Map Container */}
 			<div className="relative">
 				<div className="h-[48rem] w-full rounded-xl overflow-hidden shadow-lg">
@@ -267,6 +293,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 						locations={locations}
 						currentLocation={currentLocation}
 						weatherData={weatherData}
+						webglSupported={webglSupported}
 						onMapReady={( map ) => {
 							mapRef.current=map
 						}}

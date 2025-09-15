@@ -182,8 +182,22 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		dispatch( { type: 'SET_ERROR',payload: null } )
 
 		try {
-			const promises=state.locations.map( location => fetchWeatherData( location ) )
-			await Promise.all( promises )
+			// Refresh all saved locations
+			const locationPromises=state.locations.map( location => fetchWeatherData( location ) )
+
+			// Also refresh current location if it exists and is not in the saved locations
+			const allPromises=[ ...locationPromises ]
+			if ( state.currentLocation&&!state.locations.find( loc => loc.id===state.currentLocation!.id ) ) {
+				allPromises.push( fetchWeatherData( state.currentLocation ) )
+			}
+
+			// Refresh forecast data for all locations
+			const forecastPromises=state.locations.map( location => getForecast( location ) )
+			if ( state.currentLocation ) {
+				forecastPromises.push( getForecast( state.currentLocation ) )
+			}
+
+			await Promise.all( [ ...allPromises,...forecastPromises ] )
 		} catch ( err: any ) {
 			dispatch( { type: 'SET_ERROR',payload: { message: err.message,code: 'REFRESH_ERROR' } } )
 		} finally {
@@ -208,7 +222,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 			}
 
 			// Fetch 5-day forecast from API
-			const forecastData=await weatherAPI.get5DayForecast( location.lat,location.lon )
+			const forecastData=await weatherAPI.get5DayForecast( location.lat,location.lon,state.units )
 
 			// Process the forecast data into daily forecasts
 			const dailyForecasts=weatherAPI.processForecastData( forecastData )

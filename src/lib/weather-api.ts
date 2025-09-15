@@ -156,19 +156,21 @@ export class WeatherAPI {
 	}
 
 	formatTemperature ( temp: number,units: 'metric'|'imperial'='metric' ): string {
+		// The API already returns temperature in the requested units, so just format it
 		if ( units==='imperial' ) {
-			const fahrenheit=Math.round( ( temp*9/5+32 )*10 )/10
-			return `${fahrenheit}°F`
+			return `${Math.round( temp )}°F`
 		}
 		return `${Math.round( temp )}°C`
 	}
 
 	formatWindSpeed ( speed: number,units: 'metric'|'imperial'='metric' ): string {
+		// API returns speed in m/s, convert to requested units
 		if ( units==='imperial' ) {
-			const mph=Math.round( ( speed*3.6*0.621371 )*10 )/10
+			const mph=Math.round( ( speed*2.237 )*10 )/10 // m/s to mph
 			return `${mph} mph`
 		}
-		return `${Math.round( speed*3.6 )} km/h`
+		const kmh=Math.round( speed*3.6 ) // m/s to km/h
+		return `${kmh} km/h`
 	}
 
 	formatHumidity ( humidity: number ): string {
@@ -196,7 +198,7 @@ export class WeatherAPI {
 		} )
 	}
 
-	async get5DayForecast ( lat: number,lon: number ): Promise<ForecastData[]> {
+	async get5DayForecast ( lat: number,lon: number,units: 'metric'|'imperial'='metric' ): Promise<ForecastData[]> {
 		// Validate API key
 		if ( !this.apiKey||this.apiKey==='your-api-key-here' ) {
 			throw new Error( 'OpenWeatherMap API key is not configured. Please check your .env.local file.' )
@@ -208,7 +210,7 @@ export class WeatherAPI {
 					lat,
 					lon,
 					appid: this.apiKey,
-					units: 'metric',
+					units: units,
 				},
 			} )
 			return response.data.list

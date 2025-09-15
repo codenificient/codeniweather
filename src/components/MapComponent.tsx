@@ -16,6 +16,7 @@ interface MapComponentProps {
 	locations: any[]
 	currentLocation: any
 	weatherData: Record<string,any>
+	webglSupported: boolean
 	onMapReady: ( map: Map ) => void
 	onZoomToLocation?: ( lat: number,lon: number ) => void
 }
@@ -29,6 +30,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	locations,
 	currentLocation,
 	weatherData,
+	webglSupported,
 	onMapReady,
 	onZoomToLocation
 } ) => {
@@ -99,9 +101,15 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	}
 
 	// Create weather layer based on selected type
-	const createWeatherLayer=( layerType: string,retryCount: number=0 ) => {
+	const createWeatherLayer=async ( layerType: string,retryCount: number=0 ) => {
 		if ( !mapRef.current ) {
 			console.log( `⏳ Map not initialized for weather layer creation: ${layerType}` )
+			return null
+		}
+
+		// Check if WebGL is supported
+		if ( !webglSupported ) {
+			console.warn( `⚠️ WebGL not supported - skipping weather layer creation: ${layerType}` )
 			return null
 		}
 
@@ -111,12 +119,31 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			// Retry after a short delay if we haven't exceeded max retries
 			if ( retryCount<10 ) {
-				setTimeout( () => {
-					createWeatherLayer( layerType,retryCount+1 )
+				setTimeout( async () => {
+					await createWeatherLayer( layerType,retryCount+1 )
 				},500 )
 			} else {
 				console.error( `❌ Max retries exceeded for weather layer creation: ${layerType}` )
 			}
+			return null
+		}
+
+		// Check WebGL context availability
+		const canvas=mapRef.current.getCanvas()
+		if ( !canvas ) {
+			console.error( `❌ Canvas not available for weather layer creation: ${layerType}` )
+			return null
+		}
+
+		const gl=canvas.getContext( 'webgl' )||canvas.getContext( 'webgl2' )
+		if ( !gl ) {
+			console.error( `❌ WebGL context not available for weather layer creation: ${layerType}` )
+			return null
+		}
+
+		// Check if WebGL context is lost
+		if ( gl.isContextLost&&gl.isContextLost() ) {
+			console.error( `❌ WebGL context is lost for weather layer creation: ${layerType}` )
 			return null
 		}
 
@@ -129,6 +156,25 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		try {
 			console.log( `Creating weather layer: ${layerType}` )
 			let layer=null
+
+			// Add a small delay to ensure WebGL context is fully ready
+			await new Promise( resolve => setTimeout( resolve,100 ) )
+
+			// Additional WebGL context validation
+			const canvas=mapRef.current.getCanvas()
+			if ( !canvas ) {
+				throw new Error( 'Canvas not available' )
+			}
+
+			const gl=canvas.getContext( 'webgl' )||canvas.getContext( 'webgl2' )
+			if ( !gl ) {
+				throw new Error( 'WebGL context not available' )
+			}
+
+			// Check if WebGL context is lost
+			if ( gl.isContextLost&&gl.isContextLost() ) {
+				throw new Error( 'WebGL context is lost' )
+			}
 
 			switch ( layerType ) {
 				case 'temperature':
@@ -255,9 +301,21 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			return layer
 		} catch ( error ) {
 			console.error( `Error creating weather layer ${layerType}:`,error )
+
+			// Log WebGL-related errors for debugging
+			if ( error instanceof Error&&(
+				error.message.includes( 'WebGL' )||
+				error.message.includes( 'precision' )||
+				error.message.includes( 'Canvas' )||
+				error.message.includes( 'context' )
+			) ) {
+				console.warn( '⚠️ WebGL error detected in weather layer creation' )
+			}
+
 			return null
 		}
 	}
+
 
 	// Initialize map
 	useEffect( () => {
@@ -505,22 +563,28 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		setIsAnimating( false )
 
 		// Create the selected weather layer with retry mechanism
-		const layer=createWeatherLayer( selectedLayer )
-		if ( layer ) {
-			console.log( `✅ Weather layer ${selectedLayer} added to map successfully` )
-		} else {
-			console.log( `⏳ Weather layer ${selectedLayer} creation queued (will retry when map is ready)` )
-		}
+		createWeatherLayer( selectedLayer ).then( layer => {
+			if ( layer ) {
+				console.log( `✅ Weather layer ${selectedLayer} added to map successfully` )
+			} else {
+				console.log( `⏳ Weather layer ${selectedLayer} creation queued (will retry when map is ready)` )
+			}
+		} ).catch( error => {
+			console.error( `❌ Error creating weather layer ${selectedLayer}:`,error )
+		} )
 	},[ selectedLayer ] )
 
 	// Create weather layer when map becomes ready
 	useEffect( () => {
 		if ( isMapReady&&mapRef.current&&selectedLayer ) {
 			console.log( `🔄 Map is ready, creating weather layer: ${selectedLayer}` )
-			const layer=createWeatherLayer( selectedLayer )
-			if ( layer ) {
-				console.log( `✅ Weather layer ${selectedLayer} created successfully after map ready` )
-			}
+			createWeatherLayer( selectedLayer ).then( layer => {
+				if ( layer ) {
+					console.log( `✅ Weather layer ${selectedLayer} created successfully after map ready` )
+				}
+			} ).catch( error => {
+				console.error( `❌ Error creating weather layer ${selectedLayer} after map ready:`,error )
+			} )
 		}
 	},[ isMapReady,selectedLayer ] )
 
