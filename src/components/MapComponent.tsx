@@ -1,8 +1,12 @@
 'use client'
 
+import StateWeatherBadge from '@/components/StateWeatherBadge'
 import { useTheme } from '@/contexts/ThemeContext'
 import { CloudLayer,FrozenPrecipitationLayer } from '@/lib/custom-weather-layers'
+import { US_STATES } from '@/lib/state-boundaries'
+import { stateWeatherAggregator,StateWeatherData } from '@/lib/state-weather-aggregator'
 import { getWeatherIcon } from '@/lib/weather-icons'
+import { Location as WeatherLocation } from '@/types/weather'
 import { Map,Marker,NavigationControl,Popup } from '@maptiler/sdk'
 import { PrecipitationLayer,PressureLayer,RadarLayer,TemperatureLayer,WindLayer } from '@maptiler/weather'
 import { useEffect,useRef,useState } from 'react'
@@ -12,12 +16,10 @@ interface MapComponentProps {
 	center: [ number,number ]
 	zoom: number
 	selectedLayer: string
-	weatherLayers: any[]
-	locations: any[]
-	currentLocation: any
-	weatherData: Record<string,any>
+	locations: WeatherLocation[]
+	currentLocation: WeatherLocation|null
 	webglSupported: boolean
-	onMapReady: ( map: Map ) => void
+	onMapReady?: () => void
 	onZoomToLocation?: ( lat: number,lon: number ) => void
 }
 
@@ -33,10 +35,8 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	center,
 	zoom,
 	selectedLayer,
-	weatherLayers,
 	locations,
 	currentLocation,
-	weatherData,
 	webglSupported,
 	onMapReady,
 	onZoomToLocation
@@ -57,6 +57,10 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	const [ isPlaying,setIsPlaying ]=useState( true )
 	const [ isMapReady,setIsMapReady ]=useState( false )
 	const [ layerCreationRetryCount,setLayerCreationRetryCount ]=useState( 0 )
+	const [ stateWeatherData,setStateWeatherData ]=useState<StateWeatherData[]>( [] )
+	const [ mapBounds,setMapBounds ]=useState<{ north: number,south: number,east: number,west: number }|null>( null )
+	const [ isUpdatingStateData,setIsUpdatingStateData ]=useState( false )
+	const [ isFullscreen,setIsFullscreen ]=useState( false )
 
 	// Time animation control functions
 	const toggleAnimation=() => {
@@ -102,9 +106,73 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		return getWeatherIcon( condition,theme )
 	}
 
-	// Get weather data for a location
+	// Get weather data for a location (placeholder - would need to be passed as prop or fetched)
 	const getLocationWeather=( locationId: string ) => {
-		return weatherData[ locationId ]
+		return null
+	}
+
+	// State weather data functions
+	const updateStateWeatherData=async () => {
+		if ( !mapBounds||!selectedLayer ) return
+
+		setIsUpdatingStateData( true )
+
+		try {
+			// Clear existing data for the current layer
+			stateWeatherAggregator.clearOldSamples()
+
+			// Generate sample data for demonstration
+			stateWeatherAggregator.generateSampleData( selectedLayer,mapBounds )
+
+			// Get aggregated data
+			const data=stateWeatherAggregator.getStateWeatherData( selectedLayer )
+			setStateWeatherData( data )
+
+			console.log( `🔄 Updated state weather data for ${selectedLayer}:`,data.length,'states' )
+		} catch ( error ) {
+			console.error( 'Error updating state weather data:',error )
+		} finally {
+			setIsUpdatingStateData( false )
+		}
+	}
+
+	// Convert lat/lng to pixel coordinates for badge positioning
+	const getBadgePosition=( lat: number,lng: number ): { x: number; y: number } => {
+		if ( !mapRef.current ) return { x: 0,y: 0 }
+
+		const point=mapRef.current.project( [ lng,lat ] )
+		return { x: point.x,y: point.y }
+	}
+
+	// Check if a state should be visible based on map bounds and zoom
+	const isStateVisible=( stateData: StateWeatherData ): boolean => {
+		if ( !mapBounds ) return false
+
+		// Only show states that are at least partially visible in the current map bounds
+		const state=US_STATES.find( s => s.id===stateData.stateId )
+		if ( !state ) return false
+
+		return state.bounds.north>=mapBounds.south&&
+			state.bounds.south<=mapBounds.north&&
+			state.bounds.east>=mapBounds.west&&
+			state.bounds.west<=mapBounds.east
+	}
+
+	// Fullscreen toggle function
+	const toggleFullscreen=() => {
+		if ( !document.fullscreenElement ) {
+			// Enter fullscreen
+			if ( mapContainer.current?.requestFullscreen ) {
+				mapContainer.current.requestFullscreen()
+				setIsFullscreen( true )
+			}
+		} else {
+			// Exit fullscreen
+			if ( document.exitFullscreen ) {
+				document.exitFullscreen()
+				setIsFullscreen( false )
+			}
+		}
 	}
 
 	// Create weather layer based on selected type
@@ -365,6 +433,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			map.on( 'style.load',() => {
 				console.log( '✅ Map style loaded successfully' )
 				setIsMapReady( true )
+				onMapReady?.()
 			} )
 
 			// Handle WebGL context loss
@@ -372,7 +441,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				console.warn( 'WebGL context lost - this is usually harmless' )
 			} )
 
-			onMapReady( map )
+			onMapReady?.()
 
 			// Add markers for all locations
 			const allLocations=[ ...locations ]
@@ -388,7 +457,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				}
 
 				const weather=getLocationWeather( location.id )
-				const weatherIcon=getWeatherIconForCondition( weather?.weather?.description||'clear sky' )
+				const weatherIcon=getWeatherIconForCondition( 'clear sky' )
 
 				const marker=new Marker( {
 					color: location.id===currentLocation?.id? '#3b82f6':'#ef4444'
@@ -404,14 +473,11 @@ const MapComponent: React.FC<MapComponentProps>=( {
 										${location.id===currentLocation?.id? '<p class="text-xs text-blue-600">📍 Current Location</p>':''}
 									</div>
 								</div>
-								${weather? `
-									<div class="text-sm text-slate-600 space-y-1">
-										<p><strong>Temperature:</strong> ${Math.round( weather.main.temp )}°C</p>
-										<p><strong>Condition:</strong> ${weather.weather[ 0 ].description}</p>
-										<p><strong>Humidity:</strong> ${weather.main.humidity}%</p>
-										<p><strong>Wind:</strong> ${weather.wind.speed} m/s</p>
-									</div>
-								` :'<p class="text-sm text-slate-500">No weather data available</p>'}
+								<div class="text-sm text-slate-600 space-y-1">
+									<p><strong>Coordinates:</strong> ${location.lat.toFixed( 4 )}, ${location.lon.toFixed( 4 )}</p>
+									<p><strong>State:</strong> ${location.state||'N/A'}</p>
+									<p><strong>Country:</strong> ${location.country||'N/A'}</p>
+								</div>
 							</div>
 						`)
 					)
@@ -487,7 +553,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			}
 
 			const weather=getLocationWeather( location.id )
-			const weatherIcon=getWeatherIconForCondition( weather?.weather?.description||'clear sky' )
+			const weatherIcon=getWeatherIconForCondition( 'clear sky' )
 
 			const marker=new Marker( {
 				color: location.id===currentLocation?.id? '#3b82f6':'#ef4444'
@@ -503,14 +569,11 @@ const MapComponent: React.FC<MapComponentProps>=( {
 									${location.id===currentLocation?.id? '<p class="text-xs text-blue-600">📍 Current Location</p>':''}
 								</div>
 							</div>
-							${weather? `
-								<div class="text-sm text-slate-600 space-y-1">
-									<p><strong>Temperature:</strong> ${Math.round( weather.main.temp )}°C</p>
-									<p><strong>Condition:</strong> ${weather.weather[ 0 ].description}</p>
-									<p><strong>Humidity:</strong> ${weather.main.humidity}%</p>
-									<p><strong>Wind:</strong> ${weather.wind.speed} m/s</p>
-								</div>
-							` :'<p class="text-sm text-slate-500">No weather data available</p>'}
+							<div class="text-sm text-slate-600 space-y-1">
+								<p><strong>Coordinates:</strong> ${location.lat.toFixed( 4 )}, ${location.lon.toFixed( 4 )}</p>
+								<p><strong>State:</strong> ${location.state||'N/A'}</p>
+								<p><strong>Country:</strong> ${location.country||'N/A'}</p>
+							</div>
 						</div>
 					`)
 				)
@@ -537,7 +600,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				mapRef.current.fitBounds( bounds,{ padding: 50 } )
 			}
 		}
-	},[ locations,currentLocation,weatherData ] )
+	},[ locations,currentLocation ] )
 
 	// Handle weather layer changes
 	useEffect( () => {
@@ -620,6 +683,74 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		}
 	},[ selectedLayer,locations,currentLocation ] )
 
+	// Update map bounds when map moves
+	useEffect( () => {
+		if ( !mapRef.current ) return
+
+		const updateBounds=() => {
+			const bounds=mapRef.current!.getBounds()
+			const newBounds={
+				north: bounds.getNorth(),
+				south: bounds.getSouth(),
+				east: bounds.getEast(),
+				west: bounds.getWest()
+			}
+			setMapBounds( newBounds )
+		}
+
+		// Update bounds on move end
+		mapRef.current.on( 'moveend',updateBounds )
+
+		// Initial bounds
+		updateBounds()
+
+		return () => {
+			if ( mapRef.current ) {
+				mapRef.current.off( 'moveend',updateBounds )
+			}
+		}
+	},[ isMapReady ] )
+
+	// Update state weather data when bounds or layer changes
+	useEffect( () => {
+		if ( mapBounds&&selectedLayer ) {
+			updateStateWeatherData()
+		}
+	},[ mapBounds,selectedLayer ] )
+
+	// Force update state weather data when layer changes
+	useEffect( () => {
+		if ( selectedLayer&&mapRef.current ) {
+			// Clear existing data for the previous layer
+			stateWeatherAggregator.clearOldSamples()
+
+			// Generate new data for the current layer
+			if ( mapBounds ) {
+				updateStateWeatherData()
+			}
+		}
+	},[ selectedLayer ] )
+
+	// Update state weather data when map becomes ready
+	useEffect( () => {
+		if ( isMapReady&&selectedLayer&&mapBounds ) {
+			updateStateWeatherData()
+		}
+	},[ isMapReady,selectedLayer,mapBounds ] )
+
+	// Handle fullscreen changes
+	useEffect( () => {
+		const handleFullscreenChange=() => {
+			setIsFullscreen( !!document.fullscreenElement )
+		}
+
+		document.addEventListener( 'fullscreenchange',handleFullscreenChange )
+		return () => {
+			document.removeEventListener( 'fullscreenchange',handleFullscreenChange )
+		}
+	},[] )
+
+
 	return (
 		<div className="relative w-full h-full">
 			<div ref={mapContainer} className="w-full h-full" />
@@ -636,7 +767,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			{/* Time Animation Control Bar */}
 			{isAnimating&&weatherLayerRef.current&&(
-				<div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10">
+				<div className="absolute bottom-16 left-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10">
 					<div className="flex items-center gap-4 mb-3">
 						<div className="flex items-center gap-2">
 							<span className="text-lg">⏱️</span>
@@ -685,7 +816,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 							{selectedLayer==='frozen-precipitation'&&'❄️'}
 						</span>
 						<h3 className="font-semibold text-slate-800 dark:text-slate-200">
-							{weatherLayers.find( layer => layer.id===selectedLayer )?.name||'Weather Data'}
+							{selectedLayer.charAt( 0 ).toUpperCase()+selectedLayer.slice( 1 )}
 						</h3>
 					</div>
 					<div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
@@ -897,9 +1028,9 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			{/* Weather Layer Legend/Scale */}
 			{selectedLayer&&(
-				<div className="absolute bottom-20 left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-xs">
-					<div className="flex items-center gap-2 mb-3">
-						<span className="text-xl">
+				<div className="absolute bottom-[10rem] left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 z-10 max-w-48">
+					<div className="flex items-center gap-1.5 mb-2">
+						<span className="text-sm">
 							{selectedLayer==='temperature'&&'🌡️'}
 							{selectedLayer==='precipitation'&&'🌧️'}
 							{selectedLayer==='wind'&&'💨'}
@@ -908,18 +1039,18 @@ const MapComponent: React.FC<MapComponentProps>=( {
 							{selectedLayer==='clouds'&&'☁️'}
 							{selectedLayer==='frozen-precipitation'&&'❄️'}
 						</span>
-						<h3 className="font-semibold text-slate-800 dark:text-slate-200">
-							{weatherLayers.find( layer => layer.id===selectedLayer )?.name} Scale
+						<h3 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+							{selectedLayer.charAt( 0 ).toUpperCase()+selectedLayer.slice( 1 )} Scale
 						</h3>
 					</div>
-					<div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
+					<div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
 						{selectedLayer==='temperature'&&(
 							<div className="space-y-1">
 								<div className="flex justify-between">
-									<span className="text-red-500">Hot</span>
 									<span className="text-blue-500">Cold</span>
+									<span className="text-red-500">Hot</span>
 								</div>
-								<div className="h-2 bg-gradient-to-r from-red-500 via-yellow-400 to-blue-500 rounded"></div>
+								<div className="h-2 bg-gradient-to-r from-blue-500 via-yellow-400 to-red-500 rounded"></div>
 								<p className="text-slate-500 dark:text-slate-500">Temperature range: -40°C to 50°C</p>
 							</div>
 						)}
@@ -1025,6 +1156,36 @@ const MapComponent: React.FC<MapComponentProps>=( {
 					</div>
 					<div className="mt-2 text-xs text-slate-500 dark:text-slate-500">
 						Precipitation data for your saved locations
+					</div>
+				</div>
+			)}
+
+			{/* State Weather Badges */}
+			{stateWeatherData.map( ( stateData ) => {
+				const state=US_STATES.find( s => s.id===stateData.stateId )
+				if ( !state||!isStateVisible( stateData ) ) return null
+
+				const position=getBadgePosition( state.center[ 1 ],state.center[ 0 ] )
+
+				return (
+					<StateWeatherBadge
+						key={stateData.stateId}
+						data={stateData}
+						layerType={selectedLayer}
+						position={position}
+						isVisible={!isUpdatingStateData}
+					/>
+				)
+			} )}
+
+			{/* State Weather Data Loading Indicator */}
+			{isUpdatingStateData&&(
+				<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg px-4 py-2 flex items-center gap-2">
+						<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+						<span className="text-sm text-slate-700 dark:text-slate-300">
+							Updating state weather data...
+						</span>
 					</div>
 				</div>
 			)}

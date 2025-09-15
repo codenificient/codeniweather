@@ -14,6 +14,8 @@ interface WeatherContextType extends WeatherState {
 	getForecast: ( locationIdOrLocation: string|Location ) => Promise<DailyForecast[]>
 	setUnits: ( units: 'metric'|'imperial' ) => void
 	setCurrentLocation: ( location: Location ) => void
+	selectedLayer: string
+	setSelectedLayer: ( layer: string ) => void
 }
 
 const WeatherContext=createContext<WeatherContextType|undefined>( undefined )
@@ -28,6 +30,7 @@ type WeatherAction=
 	|{ type: 'LOAD_LOCATIONS'; payload: Location[] }
 	|{ type: 'SET_UNITS'; payload: 'metric'|'imperial' }
 	|{ type: 'SET_CURRENT_LOCATION'; payload: Location }
+	|{ type: 'SET_SELECTED_LAYER'; payload: string }
 	|{ type: 'CLEAR_ERROR' }
 
 const weatherReducer=( state: WeatherState,action: WeatherAction ): WeatherState => {
@@ -50,6 +53,8 @@ const weatherReducer=( state: WeatherState,action: WeatherAction ): WeatherState
 			return { ...state,units: action.payload }
 		case 'SET_CURRENT_LOCATION':
 			return { ...state,currentLocation: action.payload }
+		case 'SET_SELECTED_LAYER':
+			return { ...state,selectedLayer: action.payload }
 		case 'CLEAR_ERROR':
 			return { ...state,error: null }
 		default:
@@ -64,7 +69,8 @@ const initialState: WeatherState={
 	forecastData: {},
 	loading: false,
 	error: null,
-	units: 'metric'
+	units: 'metric',
+	selectedLayer: 'temperature'
 }
 
 export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { children } ) => {
@@ -263,6 +269,11 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		fetchWeatherData( location )
 	}
 
+	// Set selected weather layer
+	const setSelectedLayer=( layer: string ) => {
+		dispatch( { type: 'SET_SELECTED_LAYER',payload: layer } )
+	}
+
 	const value: WeatherContextType={
 		...state,
 		addLocation,
@@ -273,6 +284,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		getForecast,
 		setUnits,
 		setCurrentLocation,
+		setSelectedLayer,
 	}
 
 	return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>

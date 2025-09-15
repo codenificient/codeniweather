@@ -37,6 +37,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 		}
 	},[] )
 
+
 	// Weather map layers using MapTiler Weather SDK - All 7 supported metrics
 	const weatherLayers=[
 		{ id: 'temperature',name: 'Temperature',description: 'Air temperature at 2m above ground',unit: '°C',emoji: '🌡️',type: 'temperature',variableId: 'GFS_TEMPERATURE_2M' },
@@ -159,6 +160,11 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 		}
 	}
 
+	// Fullscreen toggle function - navigate to fullscreen page
+	const toggleFullscreen=() => {
+		window.location.href='/map/fullscreen'
+	}
+
 	// Handle removing a location
 	const handleRemoveLocation=( locationId: string ) => {
 		const location=locations.find( loc => loc.id===locationId )
@@ -192,56 +198,70 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 						Weather Map Layers
 					</h3>
 
-					{/* Search Controls */}
-					<div className="relative">
-						<div className="flex gap-2">
-							<input
-								type="text"
-								placeholder="Search for a city..."
-								value={searchQuery}
-								onChange={handleSearchInputChange}
-								onKeyPress={handleSearchKeyPress}
-								className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-							/>
-							<button
-								onClick={handleSearch}
-								disabled={isSearching||!searchQuery.trim()}
-								className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-400 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
-							>
-								{isSearching? '🔍':'🔍'}
-							</button>
-						</div>
+					{/* Fullscreen and Search Controls */}
+					<div className="flex items-center gap-3">
+						{/* Fullscreen Button */}
+						<button
+							onClick={toggleFullscreen}
+							className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+							title="Open fullscreen map"
+						>
+							<svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+							</svg>
+						</button>
 
-						{/* Search Results Dropdown */}
-						{showSearchResults&&searchResults.length>0&&(
-							<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-								<div className="p-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-									Search Results ({searchResults.length})
-								</div>
-								{searchResults.map( ( result,index ) => (
-									<div
-										key={index}
-										onClick={() => handleAddLocation( result )}
-										className="p-3 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors duration-200 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
-									>
-										<div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-											{result.name}
-										</div>
-										<div className="text-xs text-slate-500 dark:text-slate-400">
-											{result.state&&`${result.state}, `}{result.sys?.country||result.country}
-										</div>
+						{/* Search Controls */}
+						<div className="relative">
+							<div className="flex gap-2">
+								<input
+									type="text"
+									placeholder="Search for a city..."
+									value={searchQuery}
+									onChange={handleSearchInputChange}
+									onKeyPress={handleSearchKeyPress}
+									className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+								/>
+								<button
+									onClick={handleSearch}
+									disabled={isSearching||!searchQuery.trim()}
+									className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-400 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+								>
+									{isSearching? '🔍':'🔍'}
+								</button>
+							</div>
+
+							{/* Search Results Dropdown */}
+							{showSearchResults&&searchResults.length>0&&(
+								<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+									<div className="p-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+										Search Results ({searchResults.length})
 									</div>
-								) )}
-							</div>
-						)}
-
-						{showSearchResults&&searchResults.length===0&&searchQuery.trim()&&(
-							<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 p-3">
-								<div className="text-sm text-slate-500 dark:text-slate-400">
-									No locations found for &quot;{searchQuery}&quot;
+									{searchResults.map( ( result,index ) => (
+										<div
+											key={index}
+											onClick={() => handleAddLocation( result )}
+											className="p-3 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors duration-200 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
+										>
+											<div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+												{result.name}
+											</div>
+											<div className="text-xs text-slate-500 dark:text-slate-400">
+												{result.state&&`${result.state}, `}{result.sys?.country||result.country}
+											</div>
+										</div>
+									) )}
 								</div>
-							</div>
-						)}
+							)}
+
+							{showSearchResults&&searchResults.length===0&&searchQuery.trim()&&(
+								<div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg z-50 p-3">
+									<div className="text-sm text-slate-500 dark:text-slate-400">
+										No locations found for &quot;{searchQuery}&quot;
+									</div>
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 
@@ -282,20 +302,18 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			)}
 
 			{/* Map Container */}
-			<div className="relative">
+			<div className="map-container relative">
 				<div className="h-[48rem] w-full rounded-xl overflow-hidden shadow-lg">
 					<MapComponent
 						apiKey={getMapTilerApiKey()}
 						center={mapConfig.center}
 						zoom={mapConfig.zoom}
 						selectedLayer={selectedLayer}
-						weatherLayers={weatherLayers}
 						locations={locations}
 						currentLocation={currentLocation}
-						weatherData={weatherData}
 						webglSupported={webglSupported}
-						onMapReady={( map ) => {
-							mapRef.current=map
+						onMapReady={() => {
+							// Map is ready
 						}}
 					/>
 				</div>

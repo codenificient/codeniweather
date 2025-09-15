@@ -104,4 +104,5 @@ export interface WeatherState {
 	loading: boolean
 	error: WeatherError|null
 	units: 'metric'|'imperial'
+	selectedLayer: string
 }
