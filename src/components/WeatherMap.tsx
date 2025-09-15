@@ -16,13 +16,14 @@ interface WeatherMapProps {
 }
 
 const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
-	const { weatherData,locations,currentLocation,addLocation,removeLocation,searchCities }=useWeather()
+	const { weatherData,locations,currentLocation,addLocation,removeLocation,searchCities,setCurrentLocation }=useWeather()
 	const { theme }=useTheme()
 	const [ selectedLayer,setSelectedLayer ]=useState( 'temperature' )
 	const [ isSearching,setIsSearching ]=useState( false )
 	const [ searchQuery,setSearchQuery ]=useState( '' )
 	const [ searchResults,setSearchResults ]=useState<any[]>( [] )
 	const [ showSearchResults,setShowSearchResults ]=useState( false )
+	const [ isZoomedToLocation,setIsZoomedToLocation ]=useState( false )
 	const mapRef=useRef<Map|null>( null )
 
 	// Weather map layers using MapTiler Weather SDK - All 7 supported metrics
@@ -120,8 +121,30 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 
 	// Handle zooming to a location on the map
 	const handleZoomToLocation=( lat: number,lon: number ) => {
-		if ( mapRef.current&&( mapRef.current as any ).zoomToLocation ) {
-			; ( mapRef.current as any ).zoomToLocation( lat,lon )
+		if ( mapRef.current ) {
+			mapRef.current.flyTo( {
+				center: [ lon,lat ],
+				zoom: 10,
+				duration: 1000
+			} )
+			// Delay showing reset button until zoom animation completes
+			setTimeout( () => {
+				setIsZoomedToLocation( true )
+			},1000 )
+		}
+	}
+
+	// Handle resetting zoom to show all locations
+	const handleResetZoom=() => {
+		if ( mapRef.current ) {
+			// Hide reset button immediately when clicked
+			setIsZoomedToLocation( false )
+			const defaultConfig=getMapCenterAndZoom()
+			mapRef.current.flyTo( {
+				center: defaultConfig.center,
+				zoom: defaultConfig.zoom,
+				duration: 1000
+			} )
 		}
 	}
 
@@ -253,6 +276,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 				{/* Map Controls Overlay */}
 				<div className="absolute bottom-[8rem] right-4 z-10">
 					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3">
+
 						<div className="flex items-center gap-2 mb-2">
 							<span className="text-lg">
 								{weatherLayers.find( layer => layer.id===selectedLayer )?.emoji}
@@ -277,34 +301,90 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 			{/* Location Cards */}
 			{( locations.length>0||currentLocation )&&(
 				<div className="mt-6">
-					<h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-						Your Locations
-					</h4>
+					<div className="flex items-center justify-between mb-4">
+						<h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+							Your Locations
+						</h4>
+						{isZoomedToLocation&&(
+							<button
+								onClick={handleResetZoom}
+								className="flex items-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+								title="Reset zoom to show all locations"
+							>
+								<span className="text-sm">↩️</span>
+								<span className="text-sm font-medium">Reset View</span>
+							</button>
+						)}
+					</div>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{/* Current Location Card */}
 						{currentLocation&&(
-							<div className="glass-card rounded-xl p-4">
-								<div className="flex items-center justify-between mb-2">
-									<h5 className="font-semibold text-slate-800 dark:text-slate-200">
-										📍 Current Location
-									</h5>
+							<div className="weather-card-current">
+								<div className="flex items-center justify-between mb-6">
+									<div className="flex items-center space-x-3">
+										<div className="p-2 bg-blue-500/20 rounded-xl">
+											<span className="text-blue-300 text-lg">📍</span>
+										</div>
+										<div>
+											<h5 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+												{currentLocation.name}
+												<span className="ml-3 text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 rounded-full font-medium">
+													Current
+												</span>
+											</h5>
+											<p className="text-slate-600 dark:text-slate-400 text-sm font-medium">
+												{currentLocation.state&&`${currentLocation.state}, `}{currentLocation.country}
+											</p>
+										</div>
+									</div>
 									<span className="text-2xl">
 										{getWeatherIconForCondition( getLocationWeather( currentLocation.id )?.weather?.[ 0 ]?.description||'clear sky' )}
 									</span>
 								</div>
-								<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-									<p><strong>Location:</strong> {currentLocation.name}</p>
-									{currentLocation.state&&(
-										<p><strong>State/Province:</strong> {currentLocation.state}</p>
-									)}
-									<p><strong>Country:</strong> {currentLocation.country}</p>
-									<p><strong>Coordinates:</strong> {currentLocation.lat?.toFixed( 4 )}, {currentLocation.lon?.toFixed( 4 )}</p>
-									{getLocationWeather( currentLocation.id )&&(
-										<>
-											<p><strong>Temperature:</strong> {Math.round( getLocationWeather( currentLocation.id )!.main.temp )}°C</p>
-											<p><strong>Condition:</strong> {getLocationWeather( currentLocation.id )!.weather[ 0 ].description}</p>
-										</>
-									)}
+								{getLocationWeather( currentLocation.id )&&(
+									<div className="space-y-4">
+										{/* Weather Info */}
+										<div className="grid grid-cols-2 gap-4 text-sm">
+											<div className="flex justify-between">
+												<span className="text-slate-700 dark:text-slate-300">Temperature</span>
+												<span className="font-semibold text-slate-800 dark:text-slate-200">
+													{Math.round( getLocationWeather( currentLocation.id )!.main.temp )}°C
+												</span>
+											</div>
+											<div className="flex justify-between">
+												<span className="text-slate-700 dark:text-slate-300">Feels like</span>
+												<span className="font-semibold text-slate-800 dark:text-slate-200">
+													{Math.round( getLocationWeather( currentLocation.id )!.main.feels_like )}°C
+												</span>
+											</div>
+											<div className="flex justify-between">
+												<span className="text-slate-700 dark:text-slate-300">Humidity</span>
+												<span className="font-semibold text-slate-800 dark:text-slate-200">
+													{getLocationWeather( currentLocation.id )!.main.humidity}%
+												</span>
+											</div>
+											<div className="flex justify-between">
+												<span className="text-slate-700 dark:text-slate-300">Wind</span>
+												<span className="font-semibold text-slate-800 dark:text-slate-200">
+													{Math.round( getLocationWeather( currentLocation.id )!.wind.speed )} m/s
+												</span>
+											</div>
+										</div>
+
+										{/* Condition */}
+										<div className="text-center">
+											<p className="text-lg text-slate-700 dark:text-slate-300 capitalize font-medium">
+												{getLocationWeather( currentLocation.id )!.weather[ 0 ].description}
+											</p>
+										</div>
+									</div>
+								)}
+
+								{/* Coordinates */}
+								<div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+									<p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+										Coordinates: {currentLocation.lat?.toFixed( 4 )}, {currentLocation.lon?.toFixed( 4 )}
+									</p>
 								</div>
 							</div>
 						)}
@@ -323,6 +403,14 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 												{getWeatherIconForCondition( weather?.weather?.[ 0 ]?.description||'clear sky' )}
 											</span>
 											<div className="flex gap-1">
+												{/* Set as current location button */}
+												<button
+													onClick={() => setCurrentLocation( location )}
+													className="p-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+													title="Set as current location"
+												>
+													<span className="text-sm">🏠</span>
+												</button>
 												{/* Zoom to location button */}
 												<button
 													onClick={() => handleZoomToLocation( location.lat,location.lon )}
@@ -372,7 +460,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 					<p>• <strong>Map Navigation:</strong> Zoom and pan to explore different regions</p>
 					<p>• <strong>Weather Data:</strong> Real-time weather information from your saved locations</p>
 					<p>• <strong>Weather Layers:</strong> Switch between 7 different weather metrics using the buttons above</p>
-					<p>• <strong>Location Controls:</strong> Use 🔍 to zoom to a location or 🗑️ to remove it from your list</p>
+					<p>• <strong>Location Controls:</strong> Use 🔍 to zoom to a location, ↩️ to reset view, or 🗑️ to remove it from your list</p>
 
 					<div className="mt-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg">
 						<p className="text-green-800 dark:text-green-200 text-sm">

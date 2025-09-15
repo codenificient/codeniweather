@@ -13,6 +13,7 @@ interface WeatherContextType extends WeatherState {
 	clearError: () => void
 	getForecast: ( locationIdOrLocation: string|Location ) => Promise<DailyForecast[]>
 	setUnits: ( units: 'metric'|'imperial' ) => void
+	setCurrentLocation: ( location: Location ) => void
 }
 
 const WeatherContext=createContext<WeatherContextType|undefined>( undefined )
@@ -26,6 +27,7 @@ type WeatherAction=
 	|{ type: 'SET_FORECAST_DATA'; payload: { locationId: string; forecast: DailyForecast[] } }
 	|{ type: 'LOAD_LOCATIONS'; payload: Location[] }
 	|{ type: 'SET_UNITS'; payload: 'metric'|'imperial' }
+	|{ type: 'SET_CURRENT_LOCATION'; payload: Location }
 	|{ type: 'CLEAR_ERROR' }
 
 const weatherReducer=( state: WeatherState,action: WeatherAction ): WeatherState => {
@@ -46,6 +48,8 @@ const weatherReducer=( state: WeatherState,action: WeatherAction ): WeatherState
 			return { ...state,locations: action.payload }
 		case 'SET_UNITS':
 			return { ...state,units: action.payload }
+		case 'SET_CURRENT_LOCATION':
+			return { ...state,currentLocation: action.payload }
 		case 'CLEAR_ERROR':
 			return { ...state,error: null }
 		default:
@@ -79,6 +83,17 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 			dispatch( { type: 'SET_UNITS',payload: savedUnits } )
 		}
 
+		// Load current location from localStorage
+		const savedCurrentLocation=localStorage.getItem( 'codeniweather-current-location' )
+		if ( savedCurrentLocation ) {
+			try {
+				const currentLocation=JSON.parse( savedCurrentLocation )
+				dispatch( { type: 'SET_CURRENT_LOCATION',payload: currentLocation } )
+			} catch ( error ) {
+				console.error( 'Error parsing saved current location:',error )
+			}
+		}
+
 		// Fetch weather data for loaded locations
 		if ( savedLocations.length>0 ) {
 			savedLocations.forEach( location => {
@@ -87,6 +102,16 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 			} )
 		}
 	},[] )
+
+	// Set first location as current location if no current location is set
+	useEffect( () => {
+		if ( state.locations.length>0&&!state.currentLocation ) {
+			console.log( 'Setting first location as current location:',state.locations[ 0 ].name )
+			dispatch( { type: 'SET_CURRENT_LOCATION',payload: state.locations[ 0 ] } )
+			// Save to localStorage
+			localStorage.setItem( 'codeniweather-current-location',JSON.stringify( state.locations[ 0 ] ) )
+		}
+	},[ state.locations,state.currentLocation ] )
 
 	// Fetch weather data for a location
 	const fetchWeatherData=async ( location: Location ) => {
@@ -215,6 +240,15 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		refreshAllWeather()
 	}
 
+	// Set current location
+	const setCurrentLocation=( location: Location ) => {
+		dispatch( { type: 'SET_CURRENT_LOCATION',payload: location } )
+		// Save to localStorage
+		localStorage.setItem( 'codeniweather-current-location',JSON.stringify( location ) )
+		// Fetch weather data for the new current location
+		fetchWeatherData( location )
+	}
+
 	const value: WeatherContextType={
 		...state,
 		addLocation,
@@ -224,6 +258,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		clearError,
 		getForecast,
 		setUnits,
+		setCurrentLocation,
 	}
 
 	return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>

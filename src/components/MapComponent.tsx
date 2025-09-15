@@ -269,7 +269,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		}
 
 		try {
-			// Create map
+			// Create map with initial center and zoom
 			const map=new Map( {
 				container: mapContainer.current,
 				style: 'streets-v2',
@@ -398,7 +398,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			}
 			markersRef.current=[]
 		}
-	},[ apiKey,center,zoom,onMapReady ] )
+	},[ apiKey,onMapReady ] )
 
 	// Update markers when locations change
 	useEffect( () => {

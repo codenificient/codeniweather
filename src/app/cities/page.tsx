@@ -7,7 +7,7 @@ import { AnimatePresence,motion } from 'framer-motion'
 // Icons replaced with emojis
 
 export default function CitiesPage () {
-	const { locations,weatherData,loading,removeLocation,units }=useWeather()
+	const { locations,weatherData,loading,removeLocation,units,setCurrentLocation,currentLocation }=useWeather()
 
 	const allLocations=locations
 
@@ -44,7 +44,7 @@ export default function CitiesPage () {
 						<AnimatePresence>
 							{allLocations.map( ( location,index ) => {
 								const weather=weatherData[ location.id ]
-								const isCurrentLocation=location.isCurrentLocation||false
+								const isCurrentLocation=currentLocation?.id===location.id
 
 
 								return weather? (
@@ -61,6 +61,7 @@ export default function CitiesPage () {
 											location={location}
 											isCurrentLocation={isCurrentLocation}
 											onRemove={() => removeLocation( location.id )}
+											onSetCurrent={() => setCurrentLocation( location )}
 											units={units}
 										/>
 									</motion.div>
@@ -71,13 +72,32 @@ export default function CitiesPage () {
 										initial={{ opacity: 0,y: 20 }}
 										animate={{ opacity: 1,y: 0 }}
 										transition={{ delay: index*0.1 }}
-										className="glass-card rounded-xl p-6 animate-pulse"
+										className={`glass-card rounded-xl p-6 animate-pulse ${isCurrentLocation? 'ring-2 ring-blue-500 dark:ring-blue-400 bg-blue-50 dark:bg-blue-900/20':''}`}
 									>
 										<div className="flex items-center justify-between mb-4">
-											<h3 className="font-semibold text-slate-800 dark:text-slate-200">
-												{location.name}
-											</h3>
-											<span className="text-2xl">⏳</span>
+											<div className="flex items-center gap-2">
+												<h3 className="font-semibold text-slate-800 dark:text-slate-200">
+													{location.name}
+												</h3>
+												{isCurrentLocation&&(
+													<span className="px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded-full">
+														Current
+													</span>
+												)}
+											</div>
+											<div className="flex items-center gap-2">
+												<button
+													onClick={() => setCurrentLocation( location )}
+													className={`p-2 rounded-xl transition-all duration-300 ${isCurrentLocation
+															? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
+															:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
+														}`}
+													title={isCurrentLocation? 'Current location':'Set as current location'}
+												>
+													<span className="text-lg">🏠</span>
+												</button>
+												<span className="text-2xl">⏳</span>
+											</div>
 										</div>
 										<div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
 											<p><strong>Location:</strong> {location.name}</p>

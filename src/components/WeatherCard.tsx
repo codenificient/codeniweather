@@ -93,9 +93,20 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 				</div>
 				<div className="flex items-center space-x-2">
 					{onSetCurrent? (
-						<div className="p-2 text-green-400 group-hover:text-green-300 transition-colors" title="Set as current location">
-							<span className="text-lg">🏠</span>
-						</div>
+						<button
+							onClick={( e ) => {
+								e.stopPropagation()
+								onSetCurrent()
+							}}
+							className={`p-2 rounded-xl transition-all duration-300 group/set-current ${isCurrentLocation
+									? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
+									:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
+								}`}
+							aria-label={isCurrentLocation? 'Current location':'Set as current location'}
+							title={isCurrentLocation? 'Current location':'Set as current location'}
+						>
+							<span className="text-lg group-hover/set-current:scale-110 transition-transform">🏠</span>
+						</button>
 					):(
 						<div className="p-2 text-blue-400 group-hover:text-blue-300 transition-colors" title="View details">
 							<span className="text-lg">🔗</span>

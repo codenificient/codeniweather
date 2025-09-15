@@ -21,6 +21,9 @@ export default function Home () {
 		searchCities,
 		clearError,
 		units,
+		currentLocation,
+		setCurrentLocation,
+		locations,
 	}=useWeather()
 
 	const weatherAPI=WeatherAPI.getInstance()
@@ -88,16 +91,14 @@ export default function Home () {
 		return weatherAPI.getTimeFromTimestamp( timestamp )
 	}
 
-	// Get the first location's weather data if available
-	const firstLocation=Object.keys( weatherData )[ 0 ]
-	const currentWeather=firstLocation? weatherData[ firstLocation ]:null
-	const currentForecast=firstLocation? forecastData[ firstLocation ]:null
+	// Get the current location's weather data if available
+	const currentWeather=currentLocation? weatherData[ currentLocation.id ]:null
+	const currentForecast=currentLocation? forecastData[ currentLocation.id ]:null
 
 	// Get the location name for display
 	const getLocationName=() => {
-		if ( !currentWeather ) return ''
-		// Try to get the location name from the weather data
-		return currentWeather.name||'Unknown Location'
+		if ( !currentLocation ) return ''
+		return currentLocation.name||'Unknown Location'
 	}
 
 	return (
@@ -113,11 +114,38 @@ export default function Home () {
 					animate={{ opacity: 1,y: 0 }}
 					className="flex justify-center"
 				>
-					<LocationSearch
-						onLocationSelect={handleLocationSelect}
-						onSearch={searchCities}
-						loading={loading}
-					/>
+					<div className="flex items-center gap-4 w-full max-w-2xl">
+						<div className="flex-1">
+							<LocationSearch
+								onLocationSelect={handleLocationSelect}
+								onSearch={searchCities}
+								loading={loading}
+							/>
+						</div>
+						{/* Current Location Selector */}
+						{locations.length>0&&(
+							<div className="flex items-center gap-2">
+								<span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">📍</span>
+								<select
+									value={currentLocation?.id||''}
+									onChange={( e ) => {
+										const selectedLocation=locations.find( loc => loc.id===e.target.value )
+										if ( selectedLocation ) {
+											setCurrentLocation( selectedLocation )
+										}
+									}}
+									className="px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-w-[200px]"
+								>
+									<option value="">Select location...</option>
+									{locations.map( ( location ) => (
+										<option key={location.id} value={location.id}>
+											{location.name}{location.state? `, ${location.state}`:''}, {location.country}
+										</option>
+									) )}
+								</select>
+							</div>
+						)}
+					</div>
 				</motion.div>
 
 				{/* Error Display */}
@@ -144,6 +172,31 @@ export default function Home () {
 					</div>
 				)}
 
+				{/* Loading State for Locations without Weather Data */}
+				{!loading&&!currentWeather&&locations.length>0&&(
+					<motion.div
+						initial={{ opacity: 0,y: 30 }}
+						animate={{ opacity: 1,y: 0 }}
+						transition={{ duration: 0.6,ease: "easeOut" }}
+						className="text-center py-20"
+					>
+						<div className="glass-card-strong rounded-3xl p-12 max-w-lg mx-auto">
+							<div className="weather-icon-lg text-8xl mb-6">⏳</div>
+							<h3 className="text-3xl font-bold gradient-text-primary mb-4">
+								Loading Weather Data
+							</h3>
+							<p className="text-slate-700 dark:text-slate-300 text-lg mb-8 leading-relaxed">
+								Fetching weather information for your locations...
+							</p>
+							<div className="space-y-4">
+								<p className="text-slate-600 dark:text-slate-400 text-sm">
+									This may take a few moments
+								</p>
+							</div>
+						</div>
+					</motion.div>
+				)}
+
 				{/* Weather Display */}
 				{currentWeather&&(
 					<div className="grid grid-cols-1 xl:grid-cols-6 gap-8">
@@ -165,7 +218,7 @@ export default function Home () {
 												{getLocationName()}
 											</div>
 											<div className="text-xl text-slate-600 dark:text-slate-400 dark:text-slate-400 font-medium mb-2">
-												{currentWeather.state? `${currentWeather.state}, ${currentWeather.sys.country}`:currentWeather.sys.country}
+												{currentLocation?.state? `${currentLocation.state}, ${currentLocation.country}`:currentLocation?.country}
 											</div>
 											<div className="flex items-center space-x-3 mb-2">
 												<span className="text-2xl">🌧️</span>
@@ -354,7 +407,7 @@ export default function Home () {
 				)}
 
 				{/* Empty State */}
-				{!currentWeather&&!loading&&(
+				{!currentWeather&&!loading&&locations.length===0&&(
 					<motion.div
 						initial={{ opacity: 0,y: 30 }}
 						animate={{ opacity: 1,y: 0 }}
