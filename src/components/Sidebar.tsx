@@ -63,8 +63,12 @@ const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
 				{/* Header - Vertical */}
 				<div className="p-3 border-b border-white/20 dark:border-white/10">
 					<div className="flex flex-col items-center space-y-2">
-						<div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
-							<span className="text-xl">🌤️</span>
+						<div className="p-2 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 rounded-xl border border-slate-200 dark:border-slate-600">
+							<img
+								src="/favicon.svg"
+								alt="CodeniWeather"
+								className="w-6 h-6"
+							/>
 						</div>
 						<div className="text-center">
 							<h1 className="text-xs font-bold text-slate-800 dark:text-slate-300 leading-tight">Weather</h1>
@@ -120,7 +124,7 @@ const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
 									className={`
                     w-full flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200
                     ${isActive
-											? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+											? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg'
 											:'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
 										}
                   `}

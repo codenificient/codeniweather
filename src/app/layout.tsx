@@ -13,8 +13,8 @@ const inter=Inter( {
 
 export const metadata: Metadata={
 	title: 'CodeniWeather - Weather Companion',
-	description: 'A modern weather app built with Next.js 14. Track weather for multiple locations with real-time updates.',
-	keywords: 'weather, forecast, temperature, locations, Next.js, React',
+	description: 'A modern weather app built with Next.js 14. Track weather for multiple locations with real-time updates, interactive maps, and beautiful forecasts.',
+	keywords: 'weather, forecast, temperature, locations, Next.js, React, weather app, weather companion',
 	authors: [ { name: 'CodenificienT' } ],
 	icons: {
 		icon: [

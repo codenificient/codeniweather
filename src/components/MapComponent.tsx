@@ -21,6 +21,13 @@ interface MapComponentProps {
 	onZoomToLocation?: ( lat: number,lon: number ) => void
 }
 
+// Helper function to convert wind direction degrees to compass direction
+const getWindDirection=( degrees: number ): string => {
+	const directions=[ 'N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW' ]
+	const index=Math.round( degrees/22.5 )%16
+	return directions[ index ]
+}
+
 const MapComponent: React.FC<MapComponentProps>=( {
 	apiKey,
 	center,
@@ -666,31 +673,322 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			{/* Cursor Weather Data Display */}
 			{cursorWeatherData&&cursorPosition&&(
-				<div className="absolute top-16 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-xs">
-					<div className="flex items-center gap-2 mb-2">
-						<span className="text-2xl">🌦️</span>
-						<h3 className="font-semibold text-slate-800 dark:text-slate-200">Weather Data</h3>
+				<div className="absolute top-16 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-sm">
+					<div className="flex items-center gap-2 mb-3">
+						<span className="text-2xl">
+							{selectedLayer==='temperature'&&'🌡️'}
+							{selectedLayer==='precipitation'&&'🌧️'}
+							{selectedLayer==='wind'&&'💨'}
+							{selectedLayer==='pressure'&&'📊'}
+							{selectedLayer==='radar'&&'📡'}
+							{selectedLayer==='clouds'&&'☁️'}
+							{selectedLayer==='frozen-precipitation'&&'❄️'}
+						</span>
+						<h3 className="font-semibold text-slate-800 dark:text-slate-200">
+							{weatherLayers.find( layer => layer.id===selectedLayer )?.name||'Weather Data'}
+						</h3>
 					</div>
-					<div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-						<p><strong>Location:</strong> {cursorPosition.lat.toFixed( 4 )}, {cursorPosition.lng.toFixed( 4 )}</p>
-						{selectedLayer==='temperature'&&cursorWeatherData.temperature!==undefined&&(
-							<p><strong>Temperature:</strong> {cursorWeatherData.temperature.toFixed( 1 )}°C</p>
+					<div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+						<div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-2">
+							<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Location</p>
+							<p className="font-mono text-xs">{cursorPosition.lat.toFixed( 4 )}, {cursorPosition.lng.toFixed( 4 )}</p>
+						</div>
+
+						{/* Temperature Layer */}
+						{selectedLayer==='temperature'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.temperature!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Temperature:</span>
+										<div className="text-right">
+											<span className="font-semibold text-slate-800 dark:text-slate-200">
+												{cursorWeatherData.temperature.toFixed( 1 )}°C
+											</span>
+											<span className="text-xs text-slate-500 dark:text-slate-500 ml-2">
+												({( ( cursorWeatherData.temperature*9/5 )+32 ).toFixed( 1 )}°F)
+											</span>
+										</div>
+									</div>
+								)}
+								{cursorWeatherData.feelsLike!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Feels like:</span>
+										<div className="text-right">
+											<span className="font-semibold text-slate-800 dark:text-slate-200">
+												{cursorWeatherData.feelsLike.toFixed( 1 )}°C
+											</span>
+											<span className="text-xs text-slate-500 dark:text-slate-500 ml-2">
+												({( ( cursorWeatherData.feelsLike*9/5 )+32 ).toFixed( 1 )}°F)
+											</span>
+										</div>
+									</div>
+								)}
+							</div>
 						)}
-						{selectedLayer==='precipitation'&&cursorWeatherData.precipitation!==undefined&&(
-							<p><strong>Precipitation:</strong> {cursorWeatherData.precipitation.toFixed( 2 )} mm/h</p>
+
+						{/* Precipitation Layer */}
+						{selectedLayer==='precipitation'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.precipitation!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Precipitation:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.precipitation.toFixed( 2 )} mm/h
+										</span>
+									</div>
+								)}
+								{cursorWeatherData.precipitationType!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Type:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+											{cursorWeatherData.precipitationType}
+										</span>
+									</div>
+								)}
+							</div>
 						)}
-						{selectedLayer==='wind'&&cursorWeatherData.windSpeed!==undefined&&(
-							<p><strong>Wind Speed:</strong> {cursorWeatherData.windSpeed.toFixed( 1 )} m/s</p>
+
+						{/* Wind Layer */}
+						{selectedLayer==='wind'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.windSpeed!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Speed:</span>
+										<div className="text-right">
+											<span className="font-semibold text-slate-800 dark:text-slate-200">
+												{cursorWeatherData.windSpeed.toFixed( 1 )} m/s
+											</span>
+											<span className="text-xs text-slate-500 dark:text-slate-500 ml-2">
+												({( cursorWeatherData.windSpeed*3.6 ).toFixed( 1 )} km/h)
+											</span>
+										</div>
+									</div>
+								)}
+								{cursorWeatherData.windDirection!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Direction:</span>
+										<div className="text-right">
+											<span className="font-semibold text-slate-800 dark:text-slate-200">
+												{cursorWeatherData.windDirection.toFixed( 0 )}°
+											</span>
+											<span className="text-xs text-slate-500 dark:text-slate-500 ml-2">
+												{getWindDirection( cursorWeatherData.windDirection )}
+											</span>
+										</div>
+									</div>
+								)}
+								{cursorWeatherData.windGust!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Gust:</span>
+										<div className="text-right">
+											<span className="font-semibold text-slate-800 dark:text-slate-200">
+												{cursorWeatherData.windGust.toFixed( 1 )} m/s
+											</span>
+											<span className="text-xs text-slate-500 dark:text-slate-500 ml-2">
+												({( cursorWeatherData.windGust*3.6 ).toFixed( 1 )} km/h)
+											</span>
+										</div>
+									</div>
+								)}
+							</div>
 						)}
-						{selectedLayer==='pressure'&&cursorWeatherData.pressure!==undefined&&(
-							<p><strong>Pressure:</strong> {cursorWeatherData.pressure.toFixed( 1 )} hPa</p>
+
+						{/* Pressure Layer */}
+						{selectedLayer==='pressure'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.pressure!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Pressure:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.pressure.toFixed( 1 )} hPa
+										</span>
+									</div>
+								)}
+								{cursorWeatherData.pressureTrend!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Trend:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.pressureTrend>0? '↗️ Rising':cursorWeatherData.pressureTrend<0? '↘️ Falling':'→ Steady'}
+										</span>
+									</div>
+								)}
+							</div>
 						)}
+
+						{/* Radar Layer */}
+						{selectedLayer==='radar'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.reflectivity!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Reflectivity:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.reflectivity.toFixed( 1 )} dBZ
+										</span>
+									</div>
+								)}
+								{cursorWeatherData.intensity!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Intensity:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+											{cursorWeatherData.intensity}
+										</span>
+									</div>
+								)}
+							</div>
+						)}
+
+						{/* Clouds Layer */}
+						{selectedLayer==='clouds'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.cloudCover!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Coverage:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.cloudCover.toFixed( 1 )}%
+										</span>
+									</div>
+								)}
+								{cursorWeatherData.cloudType!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Type:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+											{cursorWeatherData.cloudType}
+										</span>
+									</div>
+								)}
+							</div>
+						)}
+
+						{/* Frozen Precipitation Layer */}
+						{selectedLayer==='frozen-precipitation'&&(
+							<div className="space-y-1">
+								{cursorWeatherData.frozenPrecipitation!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Frozen %:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.frozenPrecipitation.toFixed( 1 )}%
+										</span>
+									</div>
+								)}
+								{cursorWeatherData.snowRate!==undefined&&(
+									<div className="flex justify-between items-center">
+										<span className="text-slate-600 dark:text-slate-400">Snow Rate:</span>
+										<span className="font-semibold text-slate-800 dark:text-slate-200">
+											{cursorWeatherData.snowRate.toFixed( 2 )} mm/h
+										</span>
+									</div>
+								)}
+							</div>
+						)}
+
 						{cursorWeatherData.timestamp&&(
-							<p><strong>Time:</strong> {new Date( cursorWeatherData.timestamp ).toLocaleString()}</p>
+							<div className="pt-2 border-t border-slate-200 dark:border-slate-600">
+								<p className="text-xs text-slate-500 dark:text-slate-500">
+									<strong>Time:</strong> {new Date( cursorWeatherData.timestamp ).toLocaleString()}
+								</p>
+							</div>
 						)}
 					</div>
-					<div className="mt-2 text-xs text-slate-500 dark:text-slate-500">
-						Move cursor over map to see weather data
+					<div className="mt-3 text-xs text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-700 rounded p-2">
+						💡 Move cursor over map to see real-time weather data
+					</div>
+				</div>
+			)}
+
+			{/* Weather Layer Legend/Scale */}
+			{selectedLayer&&(
+				<div className="absolute bottom-20 left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10 max-w-xs">
+					<div className="flex items-center gap-2 mb-3">
+						<span className="text-xl">
+							{selectedLayer==='temperature'&&'🌡️'}
+							{selectedLayer==='precipitation'&&'🌧️'}
+							{selectedLayer==='wind'&&'💨'}
+							{selectedLayer==='pressure'&&'📊'}
+							{selectedLayer==='radar'&&'📡'}
+							{selectedLayer==='clouds'&&'☁️'}
+							{selectedLayer==='frozen-precipitation'&&'❄️'}
+						</span>
+						<h3 className="font-semibold text-slate-800 dark:text-slate-200">
+							{weatherLayers.find( layer => layer.id===selectedLayer )?.name} Scale
+						</h3>
+					</div>
+					<div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
+						{selectedLayer==='temperature'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-red-500">Hot</span>
+									<span className="text-blue-500">Cold</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-red-500 via-yellow-400 to-blue-500 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Temperature range: -40°C to 50°C</p>
+							</div>
+						)}
+
+						{selectedLayer==='precipitation'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-blue-100">Light</span>
+									<span className="text-blue-900">Heavy</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-blue-100 via-blue-400 to-blue-900 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Precipitation: 0-50 mm/h</p>
+							</div>
+						)}
+
+						{selectedLayer==='wind'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-green-400">Calm</span>
+									<span className="text-red-600">Strong</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-green-400 via-yellow-400 to-red-600 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Wind speed: 0-30 m/s</p>
+							</div>
+						)}
+
+						{selectedLayer==='pressure'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-purple-400">Low</span>
+									<span className="text-purple-800">High</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-800 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Pressure: 950-1050 hPa</p>
+							</div>
+						)}
+
+						{selectedLayer==='radar'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-blue-200">Weak</span>
+									<span className="text-red-600">Intense</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-blue-200 via-yellow-400 to-red-600 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Reflectivity: 0-70 dBZ</p>
+							</div>
+						)}
+
+						{selectedLayer==='clouds'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-gray-200">Clear</span>
+									<span className="text-gray-800">Overcast</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-gray-200 via-gray-400 to-gray-800 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Cloud cover: 0-100%</p>
+							</div>
+						)}
+
+						{selectedLayer==='frozen-precipitation'&&(
+							<div className="space-y-1">
+								<div className="flex justify-between">
+									<span className="text-blue-200">Rain</span>
+									<span className="text-blue-800">Snow</span>
+								</div>
+								<div className="h-2 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-800 rounded"></div>
+								<p className="text-slate-500 dark:text-slate-500">Frozen precipitation: 0-100%</p>
+							</div>
+						)}
 					</div>
 				</div>
 			)}

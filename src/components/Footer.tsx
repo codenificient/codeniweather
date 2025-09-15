@@ -13,7 +13,11 @@ const Footer: React.FC=() => {
 				<div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
 					{/* Brand and Copyright Combined */}
 					<div className="flex items-center space-x-2">
-						<span className="text-lg">🌤️</span>
+						<img
+							src="/favicon.svg"
+							alt="CodeniWeather"
+							className="w-4 h-4"
+						/>
 						<span className="text-xs text-slate-600 dark:text-slate-400 font-medium">CodeniWeather © 2025</span>
 					</div>
 

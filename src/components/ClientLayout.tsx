@@ -50,7 +50,14 @@ const ClientLayout: React.FC<ClientLayoutProps>=( { children } ) => {
 									<Menu className="w-6 h-6 text-slate-600" />
 								)}
 							</button>
-							<h1 className="text-xl font-bold text-slate-800">CodeniWeather</h1>
+							<div className="flex items-center space-x-2">
+								<img
+									src="/favicon.svg"
+									alt="CodeniWeather"
+									className="w-6 h-6"
+								/>
+								<h1 className="text-xl font-bold text-slate-800">CodeniWeather</h1>
+							</div>
 							<div className="w-10" /> {/* Spacer for centering */}
 						</div>
 					</div>

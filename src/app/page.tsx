@@ -181,7 +181,18 @@ export default function Home () {
 						className="text-center py-20"
 					>
 						<div className="glass-card-strong rounded-3xl p-12 max-w-lg mx-auto">
-							<div className="weather-icon-lg text-8xl mb-6">⏳</div>
+							<div className="flex justify-center mb-6">
+								<div className="relative">
+									<img
+										src="/favicon.svg"
+										alt="CodeniWeather"
+										className="w-20 h-20 animate-pulse"
+									/>
+									<div className="absolute inset-0 flex items-center justify-center">
+										<span className="text-2xl animate-spin">⏳</span>
+									</div>
+								</div>
+							</div>
 							<h3 className="text-3xl font-bold gradient-text-primary mb-4">
 								Loading Weather Data
 							</h3>
@@ -415,7 +426,13 @@ export default function Home () {
 						className="text-center py-20"
 					>
 						<div className="glass-card-strong rounded-3xl p-12 max-w-lg mx-auto animate-pulse-glow">
-							<div className="weather-icon-lg text-8xl mb-6">🌤️</div>
+							<div className="flex justify-center mb-6">
+								<img
+									src="/favicon.svg"
+									alt="CodeniWeather"
+									className="w-24 h-24"
+								/>
+							</div>
 							<h3 className="text-3xl font-bold gradient-text-primary mb-4">
 								Welcome to CodeniWeather
 							</h3>
