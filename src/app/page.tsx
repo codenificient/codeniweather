@@ -214,10 +214,10 @@ export default function Home () {
 											className="filter drop-shadow-2xl"
 										/>
 										<div>
-											<div className="text-6xl font-bold gradient-text-primary mb-2">
+											<div className="text-6xl font-bold gradient-text-primary mb-2 leading-tight">
 												{getLocationName()}
 											</div>
-											<div className="text-xl text-slate-600 dark:text-slate-400 dark:text-slate-400 font-medium mb-2">
+											<div className="text-xl text-slate-600 dark:text-slate-400 dark:text-slate-400 font-medium mb-2 leading-relaxed">
 												{currentLocation?.state? `${currentLocation.state}, ${currentLocation.country}`:currentLocation?.country}
 											</div>
 											<div className="flex items-center space-x-3 mb-2">
@@ -226,10 +226,10 @@ export default function Home () {
 													{getRainProbability( currentWeather )}% chance of rain
 												</span>
 											</div>
-											<div className="text-4xl font-bold text-slate-800 dark:text-slate-200 dark:text-slate-200 mb-2">
+											<div className="text-4xl font-bold text-slate-800 dark:text-slate-200 dark:text-slate-200 mb-2 leading-tight">
 												{weatherAPI.formatTemperature( currentWeather.main.temp,units )}
 											</div>
-											<div className="text-2xl text-slate-700 dark:text-slate-300 dark:text-slate-300 capitalize font-medium">
+											<div className="text-2xl text-slate-700 dark:text-slate-300 dark:text-slate-300 capitalize font-medium leading-relaxed">
 												{currentWeather.weather[ 0 ].description}
 											</div>
 											<div className="text-lg text-slate-600 dark:text-slate-400 dark:text-slate-400">
