@@ -21,16 +21,16 @@ const Footer: React.FC=() => {
 						<span className="text-xs text-slate-600 dark:text-slate-400 font-medium">CodeniWeather © 2025</span>
 					</div>
 
-					{/* Powered by OpenWeather */}
+					{/* Powered by MapTiler */}
 					<div className="flex items-center space-x-2">
 						<span className="text-xs text-slate-500 dark:text-slate-400">Powered by</span>
 						<a
-							href="https://openweathermap.org"
+							href="https://www.maptiler.com"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
 						>
-							OpenWeather
+							MapTiler
 						</a>
 					</div>
 
