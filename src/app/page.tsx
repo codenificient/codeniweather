@@ -32,13 +32,13 @@ export default function Home () {
 	const analytics=useAnalytics()
 
 	// Track page view
-	useEffect(() => {
-		analytics.trackPageView('/weather', {
+	useEffect( () => {
+		analytics.trackPageView( '/weather',{
 			page: 'weather-dashboard',
 			hasCurrentLocation: !!currentLocation,
 			locationsCount: locations.length
-		})
-	}, [analytics, currentLocation, locations.length])
+		} )
+	},[ analytics,currentLocation,locations.length ] )
 
 	const handleLocationSelect=async ( weather: WeatherData ) => {
 		const location: Location={
@@ -53,21 +53,21 @@ export default function Home () {
 		try {
 			// Add to saved locations
 			await addLocation( location )
-			
+
 			// Track location addition
-			analytics.trackLocationAdded({
+			analytics.trackLocationAdded( {
 				name: location.name,
 				state: location.state,
 				country: location.country
-			})
+			} )
 		} catch ( err ) {
 			console.error( 'Error adding location:',err )
-			
+
 			// Track error
-			analytics.trackAppError('location-add-failed', 'weather-dashboard', {
+			analytics.trackAppError( 'location-add-failed','weather-dashboard',{
 				locationName: location.name,
-				error: err instanceof Error ? err.message : 'Unknown error'
-			})
+				error: err instanceof Error? err.message:'Unknown error'
+			} )
 		}
 	}
 

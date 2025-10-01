@@ -62,7 +62,7 @@ export default function CityDetailsPage () {
 		if ( params.id ) {
 			fetchCityDetails()
 		}
-	},[ params.id ] )
+	},[ params.id,weatherAPI ] )
 
 	const handleBack=() => {
 		router.back()

@@ -15,13 +15,13 @@ export default function CitiesPage () {
 	const allLocations=locations
 
 	// Track page view
-	useEffect(() => {
-		analytics.trackPageView('/cities', {
+	useEffect( () => {
+		analytics.trackPageView( '/cities',{
 			page: 'cities-list',
 			citiesCount: allLocations.length,
 			hasCurrentLocation: !!currentLocation
-		})
-	}, [analytics, allLocations.length, currentLocation])
+		} )
+	},[ analytics,allLocations.length,currentLocation ] )
 
 	if ( loading&&allLocations.length===0 ) {
 		return (

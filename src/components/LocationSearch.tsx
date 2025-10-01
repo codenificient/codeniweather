@@ -1,7 +1,7 @@
 'use client'
 
-import { WeatherData } from '@/types/weather'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { WeatherData } from '@/types/weather'
 import { AnimatePresence,motion } from 'framer-motion'
 // Icons replaced with emojis
 import React,{ useEffect,useRef,useState } from 'react'
@@ -68,18 +68,18 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 				const searchResults=await onSearch( trimmedQuery )
 				setResults( searchResults.slice( 0,5 ) ) // Limit to 5 results
 				setShowResults( true )
-				
+
 				// Track search analytics
-				analytics.trackWeatherSearch(trimmedQuery, searchResults.length)
+				analytics.trackWeatherSearch( trimmedQuery,searchResults.length )
 			} catch ( error ) {
 				console.error( 'Search error:',error )
 				setResults( [] )
-				
+
 				// Track search error
-				analytics.trackAppError('search-failed', 'location-search', {
+				analytics.trackAppError( 'search-failed','location-search',{
 					query: trimmedQuery,
-					error: error instanceof Error ? error.message : 'Unknown error'
-				})
+					error: error instanceof Error? error.message:'Unknown error'
+				} )
 			} finally {
 				setSearchLoading( false )
 			}
@@ -90,7 +90,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 				clearTimeout( searchTimeoutRef.current )
 			}
 		}
-	},[ query ] ) // Removed onSearch dependency to prevent unnecessary re-renders
+	},[ query,analytics,onSearch ] )
 
 	const handleLocationSelect=( weather: WeatherData ) => {
 		onLocationSelect( weather )

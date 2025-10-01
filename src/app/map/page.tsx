@@ -25,13 +25,13 @@ export default function MapPage () {
 	const analytics=useAnalytics()
 
 	// Track page view
-	useEffect(() => {
-		analytics.trackPageView('/map', {
+	useEffect( () => {
+		analytics.trackPageView( '/map',{
 			page: 'weather-map',
 			locationsCount: locations.length,
-			hasWeatherData: Object.keys(weatherData).length > 0
-		})
-	}, [analytics, locations.length, weatherData])
+			hasWeatherData: Object.keys( weatherData ).length>0
+		} )
+	},[ analytics,locations.length,weatherData ] )
 
 	return (
 		<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">

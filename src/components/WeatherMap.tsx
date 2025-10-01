@@ -275,7 +275,7 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 								console.log( `🌧️ Weather layer button clicked: ${layer.id}` )
 								setSelectedLayer( layer.id )
 								// Track layer change
-								analytics.trackWeatherLayerChanged(layer.id)
+								analytics.trackWeatherLayerChanged( layer.id )
 							}}
 							className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex flex-col items-center gap-1 ${selectedLayer===layer.id
 								? 'bg-blue-500 text-white shadow-lg drop-shadow-lg'

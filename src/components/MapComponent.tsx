@@ -9,7 +9,7 @@ import { getWeatherIcon } from '@/lib/weather-icons'
 import { Location as WeatherLocation } from '@/types/weather'
 import { Map,Marker,NavigationControl,Popup } from '@maptiler/sdk'
 import { PrecipitationLayer,PressureLayer,RadarLayer,TemperatureLayer,WindLayer } from '@maptiler/weather'
-import { useEffect,useRef,useState } from 'react'
+import { useCallback,useEffect,useRef,useState } from 'react'
 
 interface MapComponentProps {
 	apiKey: string
@@ -102,9 +102,9 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	}
 
 	// Get weather icon based on weather condition and theme
-	const getWeatherIconForCondition=( condition: string ) => {
+	const getWeatherIconForCondition=useCallback( ( condition: string ) => {
 		return getWeatherIcon( condition,theme )
-	}
+	},[ theme ] )
 
 	// Get weather data for a location (placeholder - would need to be passed as prop or fetched)
 	const getLocationWeather=( locationId: string ) => {
@@ -112,7 +112,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	}
 
 	// State weather data functions
-	const updateStateWeatherData=async () => {
+	const updateStateWeatherData=useCallback( async () => {
 		if ( !mapBounds||!selectedLayer ) return
 
 		setIsUpdatingStateData( true )
@@ -134,7 +134,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		} finally {
 			setIsUpdatingStateData( false )
 		}
-	}
+	},[ mapBounds,selectedLayer ] )
 
 	// Convert lat/lng to pixel coordinates for badge positioning
 	const getBadgePosition=( lat: number,lng: number ): { x: number; y: number } => {
@@ -176,7 +176,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	}
 
 	// Create weather layer based on selected type
-	const createWeatherLayer=async ( layerType: string,retryCount: number=0 ) => {
+	const createWeatherLayer=useCallback( async ( layerType: string,retryCount: number=0 ) => {
 		if ( !mapRef.current ) {
 			console.log( `⏳ Map not initialized for weather layer creation: ${layerType}` )
 			return null
@@ -389,7 +389,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			return null
 		}
-	}
+	},[ webglSupported,currentLocation,locations ] )
 
 
 	// Initialize map
@@ -529,7 +529,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			}
 			markersRef.current=[]
 		}
-	},[ apiKey,onMapReady ] )
+	},[ apiKey,onMapReady,center,zoom,locations,currentLocation,getWeatherIconForCondition ] )
 
 	// Update markers when locations change
 	useEffect( () => {
@@ -600,7 +600,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				mapRef.current.fitBounds( bounds,{ padding: 50 } )
 			}
 		}
-	},[ locations,currentLocation ] )
+	},[ locations,currentLocation,getWeatherIconForCondition ] )
 
 	// Handle weather layer changes
 	useEffect( () => {
@@ -642,7 +642,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		} ).catch( error => {
 			console.error( `❌ Error creating weather layer ${selectedLayer}:`,error )
 		} )
-	},[ selectedLayer ] )
+	},[ selectedLayer,createWeatherLayer ] )
 
 	// Create weather layer when map becomes ready
 	useEffect( () => {
@@ -656,7 +656,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				console.error( `❌ Error creating weather layer ${selectedLayer} after map ready:`,error )
 			} )
 		}
-	},[ isMapReady,selectedLayer ] )
+	},[ isMapReady,selectedLayer,createWeatherLayer ] )
 
 	// Update precipitation data when locations change and precipitation layer is active
 	useEffect( () => {
@@ -716,7 +716,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		if ( mapBounds&&selectedLayer ) {
 			updateStateWeatherData()
 		}
-	},[ mapBounds,selectedLayer ] )
+	},[ mapBounds,selectedLayer,updateStateWeatherData ] )
 
 	// Force update state weather data when layer changes
 	useEffect( () => {
@@ -729,14 +729,14 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				updateStateWeatherData()
 			}
 		}
-	},[ selectedLayer ] )
+	},[ selectedLayer,updateStateWeatherData,mapBounds ] )
 
 	// Update state weather data when map becomes ready
 	useEffect( () => {
 		if ( isMapReady&&selectedLayer&&mapBounds ) {
 			updateStateWeatherData()
 		}
-	},[ isMapReady,selectedLayer,mapBounds ] )
+	},[ isMapReady,selectedLayer,mapBounds,updateStateWeatherData ] )
 
 	// Handle fullscreen changes
 	useEffect( () => {

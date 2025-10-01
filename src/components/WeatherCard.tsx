@@ -1,8 +1,8 @@
 'use client'
 
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { WeatherAPI } from '@/lib/weather-api'
 import { Location,WeatherData } from '@/types/weather'
-import { useAnalytics } from '@/hooks/useAnalytics'
 import { motion } from 'framer-motion'
 // Icons replaced with emojis
 import { useRouter } from 'next/navigation'
@@ -33,15 +33,15 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 		if ( onSetCurrent ) {
 			onSetCurrent()
 			// Track setting current location
-			analytics.trackUserAction('set-current-location', {
+			analytics.trackUserAction( 'set-current-location',{
 				locationId: location.id,
 				locationName: location.name,
 				page: 'cities'
-			})
+			} )
 		} else {
 			router.push( `/city/${location.id}` )
 			// Track navigation to city details
-			analytics.trackNavigation('cities', `city-details-${location.id}`)
+			analytics.trackNavigation( 'cities',`city-details-${location.id}` )
 		}
 	}
 
@@ -109,8 +109,8 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 								onSetCurrent()
 							}}
 							className={`p-2 rounded-xl transition-all duration-300 group/set-current ${isCurrentLocation
-									? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
-									:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
+								? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
+								:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
 								}`}
 							aria-label={isCurrentLocation? 'Current location':'Set as current location'}
 							title={isCurrentLocation? 'Current location':'Set as current location'}
@@ -128,7 +128,7 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 								e.stopPropagation()
 								onRemove()
 								// Track location removal
-								analytics.trackLocationRemoved(location.id, location.name)
+								analytics.trackLocationRemoved( location.id,location.name )
 							}}
 							className="p-2 text-red-400 dark:text-red-500 hover:text-red-300 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-xl transition-all duration-300 group/remove"
 							aria-label="Remove location"
