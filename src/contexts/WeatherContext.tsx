@@ -77,11 +77,51 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 	const [ state,dispatch ]=useReducer( weatherReducer,initialState )
 	const weatherAPI=WeatherAPI.getInstance()
 
+	// Default cities to populate on first load
+	const getDefaultCities=(): Location[] => [
+		{
+			id: 'default-los-angeles',
+			name: 'Los Angeles',
+			state: 'California',
+			country: 'US',
+			lat: 34.0522,
+			lon: -118.2437
+		},
+		{
+			id: 'default-new-york',
+			name: 'New York',
+			state: 'New York',
+			country: 'US',
+			lat: 40.7128,
+			lon: -74.0060
+		},
+		{
+			id: 'default-chicago',
+			name: 'Chicago',
+			state: 'Illinois',
+			country: 'US',
+			lat: 41.8781,
+			lon: -87.6298
+		}
+	]
+
 	// Load saved locations and units on mount
 	useEffect( () => {
 		const savedLocations=StorageService.getLocations()
 		console.log( 'Loading saved locations:',savedLocations )
-		dispatch( { type: 'LOAD_LOCATIONS',payload: savedLocations } )
+
+		// If no saved locations, use default cities
+		const locationsToLoad=savedLocations.length>0? savedLocations:getDefaultCities()
+
+		// If using default cities, save them to storage
+		if ( savedLocations.length===0 ) {
+			console.log( 'No saved locations found, using default cities' )
+			locationsToLoad.forEach( location => {
+				StorageService.addLocation( location )
+			} )
+		}
+
+		dispatch( { type: 'LOAD_LOCATIONS',payload: locationsToLoad } )
 
 		// Load units from localStorage
 		const savedUnits=localStorage.getItem( 'codeniweather-units' ) as 'metric'|'imperial'|null
@@ -101,8 +141,8 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		}
 
 		// Fetch weather data for loaded locations
-		if ( savedLocations.length>0 ) {
-			savedLocations.forEach( location => {
+		if ( locationsToLoad.length>0 ) {
+			locationsToLoad.forEach( location => {
 				console.log( `Fetching weather for location: ${location.name} (${location.lat}, ${location.lon})` )
 				fetchWeatherData( location )
 			} )
