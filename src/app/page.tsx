@@ -5,11 +5,13 @@ import ForecastPanel from '@/components/ForecastPanel'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import LocationSearch from '@/components/LocationSearch'
 import { useWeather } from '@/contexts/WeatherContext'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { WeatherAPI } from '@/lib/weather-api'
 import { Location,WeatherData } from '@/types/weather'
 import { AnimatePresence,motion } from 'framer-motion'
 // Weather icons replaced with emojis
 import Image from 'next/image'
+import { useEffect } from 'react'
 
 export default function Home () {
 	const {
@@ -27,6 +29,16 @@ export default function Home () {
 	}=useWeather()
 
 	const weatherAPI=WeatherAPI.getInstance()
+	const analytics=useAnalytics()
+
+	// Track page view
+	useEffect(() => {
+		analytics.trackPageView('/weather', {
+			page: 'weather-dashboard',
+			hasCurrentLocation: !!currentLocation,
+			locationsCount: locations.length
+		})
+	}, [analytics, currentLocation, locations.length])
 
 	const handleLocationSelect=async ( weather: WeatherData ) => {
 		const location: Location={
@@ -38,8 +50,25 @@ export default function Home () {
 			lon: weather.coord.lon,
 		}
 
-		// Add to saved locations
-		await addLocation( location )
+		try {
+			// Add to saved locations
+			await addLocation( location )
+			
+			// Track location addition
+			analytics.trackLocationAdded({
+				name: location.name,
+				state: location.state,
+				country: location.country
+			})
+		} catch ( err ) {
+			console.error( 'Error adding location:',err )
+			
+			// Track error
+			analytics.trackAppError('location-add-failed', 'weather-dashboard', {
+				locationName: location.name,
+				error: err instanceof Error ? err.message : 'Unknown error'
+			})
+		}
 	}
 
 	const getWeatherIcon=( iconCode: string ) => {

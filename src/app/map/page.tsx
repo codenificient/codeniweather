@@ -1,9 +1,11 @@
 'use client'
 
 import { useWeather } from '@/contexts/WeatherContext'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { motion } from 'framer-motion'
 import { MapPin,Navigation } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useEffect } from 'react'
 
 // Dynamically import WeatherMap to prevent SSR issues
 const WeatherMap=dynamic( () => import( '@/components/WeatherMap' ),{
@@ -20,6 +22,16 @@ const WeatherMap=dynamic( () => import( '@/components/WeatherMap' ),{
 
 export default function MapPage () {
 	const { locations,weatherData }=useWeather()
+	const analytics=useAnalytics()
+
+	// Track page view
+	useEffect(() => {
+		analytics.trackPageView('/map', {
+			page: 'weather-map',
+			locationsCount: locations.length,
+			hasWeatherData: Object.keys(weatherData).length > 0
+		})
+	}, [analytics, locations.length, weatherData])
 
 	return (
 		<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">

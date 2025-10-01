@@ -1,6 +1,7 @@
 'use client'
 
 import { WeatherData } from '@/types/weather'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { AnimatePresence,motion } from 'framer-motion'
 // Icons replaced with emojis
 import React,{ useEffect,useRef,useState } from 'react'
@@ -24,6 +25,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 	const searchTimeoutRef=useRef<NodeJS.Timeout>()
 	const lastSearchRef=useRef<string>( '' )
 	const searchCooldownRef=useRef<number>( 0 )
+	const analytics=useAnalytics()
 
 	useEffect( () => {
 		// Clear results if query is too short
@@ -66,9 +68,18 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 				const searchResults=await onSearch( trimmedQuery )
 				setResults( searchResults.slice( 0,5 ) ) // Limit to 5 results
 				setShowResults( true )
+				
+				// Track search analytics
+				analytics.trackWeatherSearch(trimmedQuery, searchResults.length)
 			} catch ( error ) {
 				console.error( 'Search error:',error )
 				setResults( [] )
+				
+				// Track search error
+				analytics.trackAppError('search-failed', 'location-search', {
+					query: trimmedQuery,
+					error: error instanceof Error ? error.message : 'Unknown error'
+				})
 			} finally {
 				setSearchLoading( false )
 			}

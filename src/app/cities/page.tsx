@@ -3,13 +3,25 @@
 import LoadingSpinner from '@/components/LoadingSpinner'
 import WeatherCard from '@/components/WeatherCard'
 import { useWeather } from '@/contexts/WeatherContext'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { AnimatePresence,motion } from 'framer-motion'
 // Icons replaced with emojis
+import { useEffect } from 'react'
 
 export default function CitiesPage () {
 	const { locations,weatherData,loading,removeLocation,units,setCurrentLocation,currentLocation }=useWeather()
+	const analytics=useAnalytics()
 
 	const allLocations=locations
+
+	// Track page view
+	useEffect(() => {
+		analytics.trackPageView('/cities', {
+			page: 'cities-list',
+			citiesCount: allLocations.length,
+			hasCurrentLocation: !!currentLocation
+		})
+	}, [analytics, allLocations.length, currentLocation])
 
 	if ( loading&&allLocations.length===0 ) {
 		return (

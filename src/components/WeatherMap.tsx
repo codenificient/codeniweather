@@ -2,6 +2,7 @@
 
 import { useTheme } from '@/contexts/ThemeContext'
 import { useWeather } from '@/contexts/WeatherContext'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { getWeatherIcon } from '@/lib/weather-icons'
 import { Map } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
@@ -18,6 +19,7 @@ interface WeatherMapProps {
 const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 	const { weatherData,locations,currentLocation,addLocation,removeLocation,searchCities,setCurrentLocation }=useWeather()
 	const { theme }=useTheme()
+	const analytics=useAnalytics()
 	const [ selectedLayer,setSelectedLayer ]=useState( 'temperature' )
 	const [ isSearching,setIsSearching ]=useState( false )
 	const [ searchQuery,setSearchQuery ]=useState( '' )
@@ -272,6 +274,8 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 							onClick={() => {
 								console.log( `🌧️ Weather layer button clicked: ${layer.id}` )
 								setSelectedLayer( layer.id )
+								// Track layer change
+								analytics.trackWeatherLayerChanged(layer.id)
 							}}
 							className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex flex-col items-center gap-1 ${selectedLayer===layer.id
 								? 'bg-blue-500 text-white shadow-lg drop-shadow-lg'
