@@ -43,7 +43,7 @@ export class AnalyticsService {
 	// Track weather-related events
 	async trackWeatherEvent ( event: string,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( event,properties || {},'weather-events' )
+			await this.analytics.track( event,properties||{},'weather-events' )
 		} catch ( error ) {
 			console.warn( 'Analytics weather event tracking failed:',error )
 		}
@@ -52,7 +52,7 @@ export class AnalyticsService {
 	// Track user interactions
 	async trackUserAction ( action: string,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( action,properties || {},'user-actions' )
+			await this.analytics.track( action,properties||{},'user-actions' )
 		} catch ( error ) {
 			console.warn( 'Analytics user action tracking failed:',error )
 		}
