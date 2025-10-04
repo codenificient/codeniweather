@@ -1,157 +1,155 @@
-import { Analytics } from '@codenificient/analytics-sdk'
-
-// Analytics configuration
-const ANALYTICS_CONFIG={
-	apiKey: process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'codeniweather-analytics-key',
-	endpoint: '/api/analytics',
-	debug: process.env.NODE_ENV==='development',
-	timeout: 5000
-}
-
-// Initialize analytics instance
-const analytics=new Analytics( ANALYTICS_CONFIG )
-
-// Analytics service class
-export class AnalyticsService {
-	private static instance: AnalyticsService
-	private analytics: Analytics
-
-	private constructor() {
-		this.analytics=analytics
-	}
-
-	public static getInstance (): AnalyticsService {
-		if ( !AnalyticsService.instance ) {
-			AnalyticsService.instance=new AnalyticsService()
-		}
-		return AnalyticsService.instance
-	}
-
-	// Track page views
-	async trackPageView ( page: string,properties?: Record<string,any> ) {
+// Enhanced analytics wrapper with API proxy approach
+const enhancedAnalytics = {
+	// Track page views via API proxy
+	async pageView(page: string, properties: Record<string, any> = {}) {
 		try {
-			await this.analytics.pageView( page,{
-				title: document.title,
-				referrer: document.referrer,
-				...properties
-			} )
-		} catch ( error ) {
-			console.warn( 'Analytics page view tracking failed:',error )
+			console.log('📊 Tracking page view via API proxy:', page)
+
+			const response = await fetch('/api/analytics', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					event: 'page_view',
+					properties: {
+						...properties,
+						page,
+						pageTitle: properties.pageTitle || (typeof document !== 'undefined' ? document.title : ''),
+						timestamp: new Date().toISOString(),
+						userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
+						referrer: typeof window !== 'undefined' ? document.referrer : '',
+						url: typeof window !== 'undefined' ? window.location.href : '',
+					}
+				})
+			})
+
+			if (!response.ok) {
+				throw new Error(`API request failed: ${response.status}`)
+			}
+
+			const result = await response.json()
+			console.log('✅ Page view tracked successfully:', result)
+			return result
+		} catch (error) {
+			console.warn('⚠️ Analytics pageView failed:', error)
+			return Promise.resolve()
 		}
-	}
+	},
+
+	// Track generic events via API proxy
+	async track(event: string, properties: Record<string, any> = {}) {
+		try {
+			console.log('📊 Tracking event via API proxy:', event)
+
+			const response = await fetch('/api/analytics', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					event,
+					properties: {
+						...properties,
+						timestamp: new Date().toISOString(),
+						userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
+						url: typeof window !== 'undefined' ? window.location.href : '',
+						referrer: typeof window !== 'undefined' ? document.referrer : '',
+					}
+				})
+			})
+
+			if (!response.ok) {
+				throw new Error(`API request failed: ${response.status}`)
+			}
+
+			const result = await response.json()
+			console.log('✅ Event tracked successfully:', result)
+			return result
+		} catch (error) {
+			console.warn('⚠️ Analytics track failed:', error)
+			return Promise.resolve()
+		}
+	},
 
 	// Track weather-related events
-	async trackWeatherEvent ( event: string,properties?: Record<string,any> ) {
-		try {
-			await this.analytics.track( 'weather-events',event,properties )
-		} catch ( error ) {
-			console.warn( 'Analytics weather event tracking failed:',error )
-		}
-	}
+	async trackWeatherEvent(event: string, properties?: Record<string, any>) {
+		return this.track(`weather_${event}`, {
+			...properties,
+			category: 'weather'
+		})
+	},
 
 	// Track user interactions
-	async trackUserAction ( action: string,properties?: Record<string,any> ) {
-		try {
-			await this.analytics.track( 'user-actions',action,properties )
-		} catch ( error ) {
-			console.warn( 'Analytics user action tracking failed:',error )
-		}
-	}
+	async trackUserAction(action: string, properties?: Record<string, any>) {
+		return this.track(`user_${action}`, {
+			...properties,
+			category: 'user_action'
+		})
+	},
 
 	// Track app performance
-	async trackPerformance ( metric: string,value: number,properties?: Record<string,any> ) {
-		try {
-			await this.analytics.track( 'performance','performance-metric',{
-				metric,
-				value,
-				...properties
-			} )
-		} catch ( error ) {
-			console.warn( 'Analytics performance tracking failed:',error )
-		}
-	}
+	async trackPerformance(metric: string, value: number, properties?: Record<string, any>) {
+		return this.track('performance_metric', {
+			metric,
+			value,
+			...properties,
+			category: 'performance'
+		})
+	},
 
 	// Track errors
-	async trackError ( error: string,properties?: Record<string,any> ) {
-		try {
-			await this.analytics.track( 'system-events','error-occurred',{
-				error,
-				...properties
-			} )
-		} catch ( trackingError ) {
-			console.warn( 'Analytics error tracking failed:',trackingError )
-		}
-	}
+	async trackError(error: string, properties?: Record<string, any>) {
+		return this.track('error_occurred', {
+			error,
+			...properties,
+			category: 'error'
+		})
+	},
 
 	// Track feature usage
-	async trackFeatureUsage ( feature: string,properties?: Record<string,any> ) {
-		try {
-			await this.analytics.track( 'feature-usage','feature-used',{
-				feature,
-				...properties
-			} )
-		} catch ( error ) {
-			console.warn( 'Analytics feature usage tracking failed:',error )
-		}
-	}
+	async trackFeatureUsage(feature: string, properties?: Record<string, any>) {
+		return this.track('feature_used', {
+			feature,
+			...properties,
+			category: 'feature'
+		})
+	},
 
-	// Track batch events
-	async trackBatch ( events: Array<{ event: string; properties?: Record<string,any>; namespace?: string }> ) {
+	// Test analytics connection
+	async testConnection() {
+		console.log('🧪 Testing Analytics Connection...')
 		try {
-			const eventData=events.map( ( { event,properties,namespace } ) => ( {
-				namespace: namespace||'general',
-				eventType: event,
-				properties: {
-					...properties,
-					timestamp: Date.now()
-				}
-			} ) )
-
-			await this.analytics.trackBatch( eventData )
-		} catch ( error ) {
-			console.warn( 'Analytics batch tracking failed:',error )
-		}
-	}
-
-	// Get analytics data
-	async getAnalytics ( options?: {
-		namespace?: string;
-		eventType?: string;
-		startDate?: string;
-		endDate?: string;
-		groupBy?: 'day'|'week'|'month';
-		limit?: number;
-	} ) {
-		try {
-			return await this.analytics.getAnalytics( options )
-		} catch ( error ) {
-			console.warn( 'Analytics data retrieval failed:',error )
-			return null
+			const testResult = await this.track('analytics_test', {
+				test: true,
+				timestamp: new Date().toISOString()
+			})
+			console.log('✅ Analytics connection test successful:', testResult)
+			return true
+		} catch (error) {
+			console.error('❌ Analytics connection test failed:', error)
+			return false
 		}
 	}
 }
 
-// Export singleton instance
-export const analyticsService=AnalyticsService.getInstance()
+export const analytics = enhancedAnalytics
 
 // Export specific tracking functions for convenience
-export const trackPageView=( page: string,properties?: Record<string,any> ) =>
-	analyticsService.trackPageView( page,properties )
+export const trackPageView = (page: string, properties?: Record<string, any>) =>
+	analytics.pageView(page, properties)
 
-export const trackWeatherEvent=( event: string,properties?: Record<string,any> ) =>
-	analyticsService.trackWeatherEvent( event,properties )
+export const trackWeatherEvent = (event: string, properties?: Record<string, any>) =>
+	analytics.trackWeatherEvent(event, properties)
 
-export const trackUserAction=( action: string,properties?: Record<string,any> ) =>
-	analyticsService.trackUserAction( action,properties )
+export const trackUserAction = (action: string, properties?: Record<string, any>) =>
+	analytics.trackUserAction(action, properties)
 
-export const trackPerformance=( metric: string,value: number,properties?: Record<string,any> ) =>
-	analyticsService.trackPerformance( metric,value,properties )
+export const trackPerformance = (metric: string, value: number, properties?: Record<string, any>) =>
+	analytics.trackPerformance(metric, value, properties)
 
-export const trackError=( error: string,properties?: Record<string,any> ) =>
-	analyticsService.trackError( error,properties )
+export const trackError = (error: string, properties?: Record<string, any>) =>
+	analytics.trackError(error, properties)
 
-export const trackFeatureUsage=( feature: string,properties?: Record<string,any> ) =>
-	analyticsService.trackFeatureUsage( feature,properties )
-
-export const trackBatch=( events: Array<{ event: string; properties?: Record<string,any>; namespace?: string }> ) =>
-	analyticsService.trackBatch( events )
+export const trackFeatureUsage = (feature: string, properties?: Record<string, any>) =>
+	analytics.trackFeatureUsage(feature, properties)

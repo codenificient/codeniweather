@@ -1,4 +1,4 @@
-import { analyticsService } from '@/lib/analytics'
+import { analytics } from '@/lib/analytics'
 import { useRouter } from 'next/navigation'
 import { useCallback,useEffect } from 'react'
 
@@ -8,7 +8,7 @@ export const useAnalytics=() => {
 	// Track page views automatically
 	useEffect( () => {
 		const handleRouteChange=( url: string ) => {
-			analyticsService.trackPageView( url,{
+			analytics.pageView( url,{
 				page: url,
 				timestamp: Date.now()
 			} )
@@ -25,7 +25,7 @@ export const useAnalytics=() => {
 
 	// Weather-specific tracking functions
 	const trackWeatherSearch=useCallback( ( query: string,resultsCount: number ) => {
-		analyticsService.trackWeatherEvent( 'weather-search',{
+		analytics.trackWeatherEvent( 'search',{
 			query,
 			resultsCount,
 			searchType: 'city'
@@ -33,7 +33,7 @@ export const useAnalytics=() => {
 	},[] )
 
 	const trackLocationAdded=useCallback( ( location: { name: string; state?: string; country: string } ) => {
-		analyticsService.trackWeatherEvent( 'location-added',{
+		analytics.trackWeatherEvent( 'location_added',{
 			locationName: location.name,
 			state: location.state,
 			country: location.country
@@ -41,28 +41,28 @@ export const useAnalytics=() => {
 	},[] )
 
 	const trackLocationRemoved=useCallback( ( locationId: string,locationName: string ) => {
-		analyticsService.trackWeatherEvent( 'location-removed',{
+		analytics.trackWeatherEvent( 'location_removed',{
 			locationId,
 			locationName
 		} )
 	},[] )
 
 	const trackWeatherLayerChanged=useCallback( ( layer: string ) => {
-		analyticsService.trackWeatherEvent( 'weather-layer-changed',{
+		analytics.trackWeatherEvent( 'layer_changed',{
 			layer,
 			previousLayer: 'unknown' // We could track this if needed
 		} )
 	},[] )
 
 	const trackForecastViewed=useCallback( ( locationId: string,days: number ) => {
-		analyticsService.trackWeatherEvent( 'forecast-viewed',{
+		analytics.trackWeatherEvent( 'forecast_viewed',{
 			locationId,
 			days
 		} )
 	},[] )
 
 	const trackMapInteraction=useCallback( ( interaction: string,properties?: Record<string,any> ) => {
-		analyticsService.trackWeatherEvent( 'map-interaction',{
+		analytics.trackWeatherEvent( 'map_interaction',{
 			interaction,
 			...properties
 		} )
@@ -70,7 +70,7 @@ export const useAnalytics=() => {
 
 	// User action tracking functions
 	const trackButtonClick=useCallback( ( buttonId: string,page: string,properties?: Record<string,any> ) => {
-		analyticsService.trackUserAction( 'button-click',{
+		analytics.trackUserAction( 'button_click',{
 			buttonId,
 			page,
 			...properties
@@ -78,14 +78,14 @@ export const useAnalytics=() => {
 	},[] )
 
 	const trackNavigation=useCallback( ( from: string,to: string ) => {
-		analyticsService.trackUserAction( 'navigation',{
+		analytics.trackUserAction( 'navigation',{
 			from,
 			to
 		} )
 	},[] )
 
 	const trackSettingsChanged=useCallback( ( setting: string,value: any ) => {
-		analyticsService.trackUserAction( 'settings-changed',{
+		analytics.trackUserAction( 'settings_changed',{
 			setting,
 			value
 		} )
@@ -93,12 +93,12 @@ export const useAnalytics=() => {
 
 	// Feature usage tracking
 	const trackFeatureUsed=useCallback( ( feature: string,properties?: Record<string,any> ) => {
-		analyticsService.trackFeatureUsage( feature,properties )
+		analytics.trackFeatureUsage( feature,properties )
 	},[] )
 
 	// Error tracking
 	const trackAppError=useCallback( ( error: string,context?: string,properties?: Record<string,any> ) => {
-		analyticsService.trackError( error,{
+		analytics.trackError( error,{
 			context,
 			...properties
 		} )
@@ -106,18 +106,13 @@ export const useAnalytics=() => {
 
 	// Performance tracking
 	const trackPerformanceMetric=useCallback( ( metric: string,value: number,properties?: Record<string,any> ) => {
-		analyticsService.trackPerformance( metric,value,properties )
-	},[] )
-
-	// Batch tracking for multiple events
-	const trackBatch=useCallback( ( events: Array<{ event: string; properties?: Record<string,any>; namespace?: string }> ) => {
-		analyticsService.trackBatch( events )
+		analytics.trackPerformance( metric,value,properties )
 	},[] )
 
 	return {
 		// Page tracking
 		trackPageView: ( page: string,properties?: Record<string,any> ) =>
-			analyticsService.trackPageView( page,properties ),
+			analytics.pageView( page,properties ),
 
 		// Weather tracking
 		trackWeatherSearch,
@@ -129,7 +124,7 @@ export const useAnalytics=() => {
 
 		// User action tracking
 		trackUserAction: ( action: string,properties?: Record<string,any> ) =>
-			analyticsService.trackUserAction( action,properties ),
+			analytics.trackUserAction( action,properties ),
 		trackButtonClick,
 		trackNavigation,
 		trackSettingsChanged,
@@ -139,10 +134,7 @@ export const useAnalytics=() => {
 		trackAppError,
 		trackPerformanceMetric,
 
-		// Batch tracking
-		trackBatch,
-
-		// Direct access to analytics service
-		analyticsService
+		// Direct access to analytics
+		analytics
 	}
 }
