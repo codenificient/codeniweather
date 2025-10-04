@@ -33,6 +33,14 @@ export async function POST ( request: NextRequest ) {
 
 		// Send to your analytics dashboard
 		try {
+			const payload={
+				event,
+				properties: enhancedProperties,
+				source: 'codeniweather'
+			}
+
+			console.log( '📤 Sending to analytics dashboard:',JSON.stringify( payload,null,2 ) )
+
 			const analyticsResponse=await fetch( 'https://analytics-dashboard-phi-six.vercel.app/api/events',{
 				method: 'POST',
 				headers: {
@@ -40,17 +48,17 @@ export async function POST ( request: NextRequest ) {
 					'Authorization': `Bearer ${process.env.ANALYTICS_API_KEY||'proj_codeniweather_main'}`,
 					'User-Agent': 'codeniweather/1.0'
 				},
-				body: JSON.stringify( {
-					event,
-					properties: enhancedProperties,
-					source: 'codeniweather'
-				} )
+				body: JSON.stringify( payload )
 			} )
 
 			if ( !analyticsResponse.ok ) {
-				console.warn( `Analytics dashboard responded with status: ${analyticsResponse.status}` )
+				const errorText=await analyticsResponse.text()
+				console.warn( `❌ Analytics dashboard responded with status: ${analyticsResponse.status}` )
+				console.warn( `❌ Response body:`,errorText )
 			} else {
+				const responseData=await analyticsResponse.json()
 				console.log( '✅ Analytics data sent to dashboard successfully' )
+				console.log( '✅ Response:',responseData )
 			}
 		} catch ( analyticsError ) {
 			console.warn( '⚠️ Failed to send to analytics dashboard:',analyticsError )
