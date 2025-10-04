@@ -34,9 +34,11 @@ export async function POST ( request: NextRequest ) {
 		// Send to your analytics dashboard
 		try {
 			const payload={
+				projectId: process.env.ANALYTICS_API_KEY||'proj_codeniweather_main',
 				event,
 				properties: enhancedProperties,
-				source: 'codeniweather'
+				source: 'codeniweather',
+				timestamp: enhancedProperties.timestamp
 			}
 
 			console.log( '📤 Sending to analytics dashboard:',JSON.stringify( payload,null,2 ) )
