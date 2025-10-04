@@ -196,7 +196,7 @@ const enhancedAnalytics={
 		return analytics
 	},
 
-	// Fetch analytics data for current project
+	// Fetch analytics data via API proxy
 	async fetchAnalytics ( options?: {
 		namespace?: string;
 		eventType?: string;
@@ -206,13 +206,32 @@ const enhancedAnalytics={
 		limit?: number;
 	} ) {
 		try {
-			if ( !analytics ) {
-				console.warn( '⚠️ Analytics SDK not initialized' )
-				return null
+			// Build query string from options
+			const queryParams=new URLSearchParams()
+			if ( options?.namespace ) queryParams.set( 'namespace',options.namespace )
+			if ( options?.eventType ) queryParams.set( 'eventType',options.eventType )
+			if ( options?.startDate ) queryParams.set( 'startDate',options.startDate )
+			if ( options?.endDate ) queryParams.set( 'endDate',options.endDate )
+			if ( options?.groupBy ) queryParams.set( 'groupBy',options.groupBy )
+			if ( options?.limit ) queryParams.set( 'limit',options.limit.toString() )
+
+			const queryString=queryParams.toString()
+			const url=`/api/analytics${queryString? `?${queryString}`:''}`
+
+			console.log( '📊 Fetching analytics data via proxy:',url )
+
+			const response=await fetch( url,{
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			} )
+
+			if ( !response.ok ) {
+				throw new Error( `Failed to fetch analytics: ${response.status}` )
 			}
 
-			console.log( '📊 Fetching analytics data with options:',options )
-			const data=await analytics.getAnalytics( options )
+			const data=await response.json()
 			console.log( '✅ Analytics data retrieved:',data )
 			return data
 		} catch ( error ) {

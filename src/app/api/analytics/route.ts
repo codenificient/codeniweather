@@ -87,11 +87,65 @@ export async function POST ( request: NextRequest ) {
 	}
 }
 
-export async function GET () {
-	return NextResponse.json( {
-		message: 'Analytics API is running',
-		endpoints: {
-			POST: '/api/analytics - Track events'
+export async function GET ( request: NextRequest ) {
+	try {
+		const { searchParams }=new URL( request.url )
+
+		// Build query string for filtering
+		const queryParams: Record<string,string>={}
+
+		// Optional filters
+		if ( searchParams.get( 'namespace' ) ) queryParams.namespace=searchParams.get( 'namespace' )!
+		if ( searchParams.get( 'eventType' ) ) queryParams.eventType=searchParams.get( 'eventType' )!
+		if ( searchParams.get( 'startDate' ) ) queryParams.startDate=searchParams.get( 'startDate' )!
+		if ( searchParams.get( 'endDate' ) ) queryParams.endDate=searchParams.get( 'endDate' )!
+		if ( searchParams.get( 'groupBy' ) ) queryParams.groupBy=searchParams.get( 'groupBy' )!
+		if ( searchParams.get( 'limit' ) ) queryParams.limit=searchParams.get( 'limit' )!
+
+		const queryString=new URLSearchParams( queryParams ).toString()
+		const analyticsUrl=`https://analytics-dashboard-phi-six.vercel.app/api/analytics${queryString? `?${queryString}`:''}`
+
+		console.log( '📊 Fetching analytics from:',analyticsUrl )
+
+		// Fetch analytics data from remote dashboard
+		const response=await fetch( analyticsUrl,{
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${process.env.ANALYTICS_API_KEY||'proj_codeniweather_main'}`,
+				'User-Agent': 'codeniweather/1.0'
+			}
+		} )
+
+		if ( !response.ok ) {
+			const errorText=await response.text()
+			console.warn( `❌ Analytics dashboard responded with status: ${response.status}` )
+			console.warn( `❌ Response body:`,errorText )
+			return NextResponse.json(
+				{
+					success: false,
+					error: 'Failed to fetch analytics',
+					message: `Dashboard responded with ${response.status}`
+				},
+				{ status: response.status }
+			)
 		}
-	} )
+
+		const data=await response.json()
+		console.log( '✅ Analytics data fetched successfully' )
+		console.log( '📈 Total Visitors:',data.totalVisitors )
+
+		return NextResponse.json( data )
+
+	} catch ( error ) {
+		console.error( '❌ Analytics API GET error:',error )
+		return NextResponse.json(
+			{
+				success: false,
+				error: 'Failed to fetch analytics',
+				message: error instanceof Error? error.message:'Unknown error'
+			},
+			{ status: 500 }
+		)
+	}
 }
