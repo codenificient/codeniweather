@@ -65,25 +65,22 @@ export default function Home () {
 		}
 	}
 
-	// Fetch analytics data
+	// Fetch analytics data using SDK (project identified by API key)
 	const handleFetchAnalytics = async () => {
 		setFetchingAnalytics(true)
 		try {
-			const response = await fetch('https://analytics-dashboard-phi-six.vercel.app/api/analytics?projectId=proj_codeniweather_main', {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer proj_codeniweather_main`
-				}
-			})
+			// Fetch all analytics data for the configured project
+			const data = await analytics.fetchAnalytics()
 
-			if (!response.ok) {
-				throw new Error(`Failed to fetch analytics: ${response.status}`)
+			if (data) {
+				setAnalyticsData(data)
+				console.log('📊 Analytics data:', data)
+				console.log('📈 Total Visitors:', data.totalVisitors)
+				console.log('📈 Visitors Today:', data.visitorsToday)
+				console.log('🌍 Top Countries:', data.topCountries)
+			} else {
+				alert('No analytics data available. Check console for details.')
 			}
-
-			const data = await response.json()
-			setAnalyticsData(data)
-			console.log('📊 Analytics data:', data)
 		} catch (error) {
 			console.error('❌ Failed to fetch analytics:', error)
 			alert('Failed to fetch analytics. Check console for details.')

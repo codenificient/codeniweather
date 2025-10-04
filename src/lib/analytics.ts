@@ -192,8 +192,33 @@ const enhancedAnalytics={
 	},
 
 	// Add a method to check if analytics is available
-	getAnalytics () {
+	getAnalyticsInstance () {
 		return analytics
+	},
+
+	// Fetch analytics data for current project
+	async fetchAnalytics ( options?: {
+		namespace?: string;
+		eventType?: string;
+		startDate?: string;
+		endDate?: string;
+		groupBy?: 'day'|'week'|'month';
+		limit?: number;
+	} ) {
+		try {
+			if ( !analytics ) {
+				console.warn( '⚠️ Analytics SDK not initialized' )
+				return null
+			}
+
+			console.log( '📊 Fetching analytics data with options:',options )
+			const data=await analytics.getAnalytics( options )
+			console.log( '✅ Analytics data retrieved:',data )
+			return data
+		} catch ( error ) {
+			console.error( '❌ Failed to fetch analytics:',error )
+			return null
+		}
 	},
 
 	// Test analytics connection
