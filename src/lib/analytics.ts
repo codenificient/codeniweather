@@ -147,6 +147,50 @@ const enhancedAnalytics={
 		}
 	},
 
+	// Track weather-related events
+	trackWeatherEvent ( event: string,properties?: Record<string,any> ) {
+		return this.track( `weather_${event}`,{
+			...properties,
+			category: 'weather'
+		} )
+	},
+
+	// Track user interactions
+	trackUserAction ( action: string,properties?: Record<string,any> ) {
+		return this.track( `user_${action}`,{
+			...properties,
+			category: 'user_action'
+		} )
+	},
+
+	// Track app performance
+	trackPerformance ( metric: string,value: number,properties?: Record<string,any> ) {
+		return this.track( 'performance_metric',{
+			metric,
+			value,
+			...properties,
+			category: 'performance'
+		} )
+	},
+
+	// Track errors
+	trackError ( error: string,properties?: Record<string,any> ) {
+		return this.track( 'error_occurred',{
+			error,
+			...properties,
+			category: 'error'
+		} )
+	},
+
+	// Track feature usage
+	trackFeatureUsage ( feature: string,properties?: Record<string,any> ) {
+		return this.track( 'feature_used',{
+			feature,
+			...properties,
+			category: 'feature'
+		} )
+	},
+
 	// Add a method to check if analytics is available
 	getAnalytics () {
 		return analytics
