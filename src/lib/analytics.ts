@@ -1,147 +1,181 @@
-// Enhanced analytics wrapper with API proxy approach
-const enhancedAnalytics = {
-	// Track page views via API proxy (non-blocking)
-	pageView(page: string, properties: Record<string, any> = {}) {
-		// Fire and forget - don't block UI
-		if (typeof window === 'undefined') return Promise.resolve()
+import { Analytics } from '@codenificient/analytics-sdk'
 
-		console.log('📊 Tracking page view via API proxy:', page)
+// Check if analytics is properly configured
+const isAnalyticsConfigured=() => {
+	const apiKey=process.env.NEXT_PUBLIC_ANALYTICS_API_KEY || 'proj_codeniweather_main'
+	const endpoint=process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app'
 
-		fetch('/api/analytics', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				event: 'page_view',
-				properties: {
-					...properties,
-					page,
-					pageTitle: properties.pageTitle || document.title,
-					timestamp: new Date().toISOString(),
-					userAgent: window.navigator.userAgent,
-					referrer: document.referrer,
-					url: window.location.href,
-				}
-			}),
-			keepalive: true // Ensure request completes even if page unloads
-		}).then(response => {
-			if (response.ok) {
-				console.log('✅ Page view tracked successfully')
+	console.log( '🔍 Analytics Configuration Check:' )
+	console.log( '  - API Key:',apiKey? `${apiKey.substring( 0,8 )}...`:'NOT SET' )
+	console.log( '  - Endpoint:',endpoint )
+	console.log( '  - NODE_ENV:',process.env.NODE_ENV )
+
+	// Check if we have valid configuration (not placeholder values)
+	const isValid=apiKey&&
+		apiKey!=='your_analytics_api_key_here'&&
+		endpoint&&
+		endpoint!=='https://your-analytics-api.com'&&
+		!endpoint.includes( 'your-analytics-api.com' )
+
+	console.log( '  - Is Valid Configuration:',isValid )
+	return isValid
+}
+
+// Create analytics instance only if properly configured
+let analytics: Analytics|null=null
+
+if ( isAnalyticsConfigured() ) {
+	try {
+		analytics=new Analytics( {
+			apiKey: process.env.NEXT_PUBLIC_ANALYTICS_API_KEY!,
+			endpoint: process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app',
+			debug: process.env.NODE_ENV==='development',
+		} )
+		console.log( '✅ Analytics SDK initialized successfully' )
+	} catch ( error ) {
+		console.warn( '⚠️ Failed to initialize Analytics SDK:',error )
+		analytics=null
+	}
+} else {
+	console.log( 'ℹ️ Analytics not configured - using API proxy mode' )
+}
+
+// Enhanced analytics wrapper with API proxy
+const enhancedAnalytics={
+	// Use API proxy for page views
+	async pageView ( url: string,properties: Record<string,any>={} ) {
+		try {
+			console.log( '📊 Tracking page view via API proxy:',url )
+
+			const response=await fetch( '/api/analytics',{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify( {
+					event: 'page_view',
+					properties: {
+						...properties,
+						url,
+						pageTitle: properties.pageTitle||document.title,
+						timestamp: new Date().toISOString(),
+						userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+						referrer: typeof window!=='undefined'? document.referrer:'',
+					}
+				} )
+			} )
+
+			if ( !response.ok ) {
+				throw new Error( `API request failed: ${response.status}` )
 			}
-		}).catch(error => {
-			console.warn('⚠️ Analytics pageView failed:', error)
-		})
 
-		return Promise.resolve()
+			const result=await response.json()
+			console.log( '✅ Page view tracked successfully:',result )
+			return result
+		} catch ( error ) {
+			console.warn( '⚠️ Analytics pageView failed:',error )
+			return Promise.resolve()
+		}
 	},
 
-	// Track generic events via API proxy (non-blocking)
-	track(event: string, properties: Record<string, any> = {}) {
-		// Fire and forget - don't block UI
-		if (typeof window === 'undefined') return Promise.resolve()
+	async track ( event: string,properties: Record<string,any>={} ) {
+		try {
+			console.log( '📊 Tracking event via API proxy:',event )
 
-		console.log('📊 Tracking event via API proxy:', event)
+			const response=await fetch( '/api/analytics',{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify( {
+					event,
+					properties: {
+						...properties,
+						timestamp: new Date().toISOString(),
+						userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+						url: typeof window!=='undefined'? window.location.href:'',
+						referrer: typeof window!=='undefined'? document.referrer:'',
+					}
+				} )
+			} )
 
-		fetch('/api/analytics', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				event,
-				properties: {
-					...properties,
-					timestamp: new Date().toISOString(),
-					userAgent: window.navigator.userAgent,
-					url: window.location.href,
-					referrer: document.referrer,
-				}
-			}),
-			keepalive: true // Ensure request completes even if page unloads
-		}).then(response => {
-			if (response.ok) {
-				console.log('✅ Event tracked successfully')
+			if ( !response.ok ) {
+				throw new Error( `API request failed: ${response.status}` )
 			}
-		}).catch(error => {
-			console.warn('⚠️ Analytics track failed:', error)
-		})
 
-		return Promise.resolve()
+			const result=await response.json()
+			console.log( '✅ Event tracked successfully:',result )
+			return result
+		} catch ( error ) {
+			console.warn( '⚠️ Analytics track failed:',error )
+			return Promise.resolve()
+		}
 	},
 
-	// Track weather-related events (non-blocking)
-	trackWeatherEvent(event: string, properties?: Record<string, any>) {
-		return this.track(`weather_${event}`, {
-			...properties,
-			category: 'weather'
-		})
+	async blogView ( slug: string,properties: Record<string,any>={} ) {
+		try {
+			console.log( '📊 Tracking blog view via API proxy:',slug )
+
+			const response=await fetch( '/api/analytics',{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify( {
+					event: 'blog_view',
+					properties: {
+						...properties,
+						slug,
+						timestamp: new Date().toISOString(),
+						userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+						url: typeof window!=='undefined'? window.location.href:'',
+						referrer: typeof window!=='undefined'? document.referrer:'',
+					}
+				} )
+			} )
+
+			if ( !response.ok ) {
+				throw new Error( `API request failed: ${response.status}` )
+			}
+
+			const result=await response.json()
+			console.log( '✅ Blog view tracked successfully:',result )
+			return result
+		} catch ( error ) {
+			console.warn( '⚠️ Analytics blogView failed:',error )
+			return Promise.resolve()
+		}
 	},
 
-	// Track user interactions (non-blocking)
-	trackUserAction(action: string, properties?: Record<string, any>) {
-		return this.track(`user_${action}`, {
-			...properties,
-			category: 'user_action'
-		})
-	},
-
-	// Track app performance (non-blocking)
-	trackPerformance(metric: string, value: number, properties?: Record<string, any>) {
-		return this.track('performance_metric', {
-			metric,
-			value,
-			...properties,
-			category: 'performance'
-		})
-	},
-
-	// Track errors (non-blocking)
-	trackError(error: string, properties?: Record<string, any>) {
-		return this.track('error_occurred', {
-			error,
-			...properties,
-			category: 'error'
-		})
-	},
-
-	// Track feature usage (non-blocking)
-	trackFeatureUsage(feature: string, properties?: Record<string, any>) {
-		return this.track('feature_used', {
-			feature,
-			...properties,
-			category: 'feature'
-		})
+	// Add a method to check if analytics is available
+	getAnalytics () {
+		return analytics
 	},
 
 	// Test analytics connection
-	testConnection() {
-		console.log('🧪 Testing Analytics Connection...')
-		this.track('analytics_test', {
-			test: true,
-			timestamp: new Date().toISOString()
-		})
-		return Promise.resolve(true)
+	async testConnection () {
+		console.log( '🧪 Testing Analytics Connection:' )
+		console.log( '  - Analytics Instance:',analytics? 'Available':'NULL' )
+		console.log( '  - Configuration Valid:',isAnalyticsConfigured() )
+
+		if ( !analytics ) {
+			console.log( '❌ Cannot test - Analytics instance is null' )
+			return false
+		}
+
+		try {
+			// Test with a simple track event
+			const testResult=await this.track( 'analytics-test',{
+				test: true,
+				timestamp: new Date().toISOString()
+			} )
+			console.log( '✅ Analytics connection test successful:',testResult )
+			return true
+		} catch ( error ) {
+			console.error( '❌ Analytics connection test failed:',error )
+			return false
+		}
 	}
 }
 
-export const analytics = enhancedAnalytics
-
-// Export specific tracking functions for convenience
-export const trackPageView = (page: string, properties?: Record<string, any>) =>
-	analytics.pageView(page, properties)
-
-export const trackWeatherEvent = (event: string, properties?: Record<string, any>) =>
-	analytics.trackWeatherEvent(event, properties)
-
-export const trackUserAction = (action: string, properties?: Record<string, any>) =>
-	analytics.trackUserAction(action, properties)
-
-export const trackPerformance = (metric: string, value: number, properties?: Record<string, any>) =>
-	analytics.trackPerformance(metric, value, properties)
-
-export const trackError = (error: string, properties?: Record<string, any>) =>
-	analytics.trackError(error, properties)
-
-export const trackFeatureUsage = (feature: string, properties?: Record<string, any>) =>
-	analytics.trackFeatureUsage(feature, properties)
+export { enhancedAnalytics as analytics }
