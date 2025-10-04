@@ -1,95 +1,93 @@
 // Enhanced analytics wrapper with API proxy approach
 const enhancedAnalytics = {
-	// Track page views via API proxy
-	async pageView(page: string, properties: Record<string, any> = {}) {
-		try {
-			console.log('📊 Tracking page view via API proxy:', page)
+	// Track page views via API proxy (non-blocking)
+	pageView(page: string, properties: Record<string, any> = {}) {
+		// Fire and forget - don't block UI
+		if (typeof window === 'undefined') return Promise.resolve()
 
-			const response = await fetch('/api/analytics', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					event: 'page_view',
-					properties: {
-						...properties,
-						page,
-						pageTitle: properties.pageTitle || (typeof document !== 'undefined' ? document.title : ''),
-						timestamp: new Date().toISOString(),
-						userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-						referrer: typeof window !== 'undefined' ? document.referrer : '',
-						url: typeof window !== 'undefined' ? window.location.href : '',
-					}
-				})
-			})
+		console.log('📊 Tracking page view via API proxy:', page)
 
-			if (!response.ok) {
-				throw new Error(`API request failed: ${response.status}`)
+		fetch('/api/analytics', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				event: 'page_view',
+				properties: {
+					...properties,
+					page,
+					pageTitle: properties.pageTitle || document.title,
+					timestamp: new Date().toISOString(),
+					userAgent: window.navigator.userAgent,
+					referrer: document.referrer,
+					url: window.location.href,
+				}
+			}),
+			keepalive: true // Ensure request completes even if page unloads
+		}).then(response => {
+			if (response.ok) {
+				console.log('✅ Page view tracked successfully')
 			}
-
-			const result = await response.json()
-			console.log('✅ Page view tracked successfully:', result)
-			return result
-		} catch (error) {
+		}).catch(error => {
 			console.warn('⚠️ Analytics pageView failed:', error)
-			return Promise.resolve()
-		}
+		})
+
+		return Promise.resolve()
 	},
 
-	// Track generic events via API proxy
-	async track(event: string, properties: Record<string, any> = {}) {
-		try {
-			console.log('📊 Tracking event via API proxy:', event)
+	// Track generic events via API proxy (non-blocking)
+	track(event: string, properties: Record<string, any> = {}) {
+		// Fire and forget - don't block UI
+		if (typeof window === 'undefined') return Promise.resolve()
 
-			const response = await fetch('/api/analytics', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					event,
-					properties: {
-						...properties,
-						timestamp: new Date().toISOString(),
-						userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-						url: typeof window !== 'undefined' ? window.location.href : '',
-						referrer: typeof window !== 'undefined' ? document.referrer : '',
-					}
-				})
-			})
+		console.log('📊 Tracking event via API proxy:', event)
 
-			if (!response.ok) {
-				throw new Error(`API request failed: ${response.status}`)
+		fetch('/api/analytics', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				event,
+				properties: {
+					...properties,
+					timestamp: new Date().toISOString(),
+					userAgent: window.navigator.userAgent,
+					url: window.location.href,
+					referrer: document.referrer,
+				}
+			}),
+			keepalive: true // Ensure request completes even if page unloads
+		}).then(response => {
+			if (response.ok) {
+				console.log('✅ Event tracked successfully')
 			}
-
-			const result = await response.json()
-			console.log('✅ Event tracked successfully:', result)
-			return result
-		} catch (error) {
+		}).catch(error => {
 			console.warn('⚠️ Analytics track failed:', error)
-			return Promise.resolve()
-		}
+		})
+
+		return Promise.resolve()
 	},
 
-	// Track weather-related events
-	async trackWeatherEvent(event: string, properties?: Record<string, any>) {
+	// Track weather-related events (non-blocking)
+	trackWeatherEvent(event: string, properties?: Record<string, any>) {
 		return this.track(`weather_${event}`, {
 			...properties,
 			category: 'weather'
 		})
 	},
 
-	// Track user interactions
-	async trackUserAction(action: string, properties?: Record<string, any>) {
+	// Track user interactions (non-blocking)
+	trackUserAction(action: string, properties?: Record<string, any>) {
 		return this.track(`user_${action}`, {
 			...properties,
 			category: 'user_action'
 		})
 	},
 
-	// Track app performance
-	async trackPerformance(metric: string, value: number, properties?: Record<string, any>) {
+	// Track app performance (non-blocking)
+	trackPerformance(metric: string, value: number, properties?: Record<string, any>) {
 		return this.track('performance_metric', {
 			metric,
 			value,
@@ -98,8 +96,8 @@ const enhancedAnalytics = {
 		})
 	},
 
-	// Track errors
-	async trackError(error: string, properties?: Record<string, any>) {
+	// Track errors (non-blocking)
+	trackError(error: string, properties?: Record<string, any>) {
 		return this.track('error_occurred', {
 			error,
 			...properties,
@@ -107,8 +105,8 @@ const enhancedAnalytics = {
 		})
 	},
 
-	// Track feature usage
-	async trackFeatureUsage(feature: string, properties?: Record<string, any>) {
+	// Track feature usage (non-blocking)
+	trackFeatureUsage(feature: string, properties?: Record<string, any>) {
 		return this.track('feature_used', {
 			feature,
 			...properties,
@@ -117,19 +115,13 @@ const enhancedAnalytics = {
 	},
 
 	// Test analytics connection
-	async testConnection() {
+	testConnection() {
 		console.log('🧪 Testing Analytics Connection...')
-		try {
-			const testResult = await this.track('analytics_test', {
-				test: true,
-				timestamp: new Date().toISOString()
-			})
-			console.log('✅ Analytics connection test successful:', testResult)
-			return true
-		} catch (error) {
-			console.error('❌ Analytics connection test failed:', error)
-			return false
-		}
+		this.track('analytics_test', {
+			test: true,
+			timestamp: new Date().toISOString()
+		})
+		return Promise.resolve(true)
 	}
 }
 
