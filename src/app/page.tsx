@@ -33,7 +33,7 @@ export default function Home () {
 
 	// Track page view
 	useEffect( () => {
-		analytics.trackPageView( '/weather',{
+		analytics.trackPageView( '/',{
 			page: 'weather-dashboard',
 			hasCurrentLocation: !!currentLocation,
 			locationsCount: locations.length
