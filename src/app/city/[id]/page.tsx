@@ -2,6 +2,7 @@
 
 import ErrorAlert from '@/components/ErrorAlert'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { analytics } from '@/lib/analytics'
 import { WeatherAPI } from '@/lib/weather-api'
 import { Location,WeatherData } from '@/types/weather'
 import { motion } from 'framer-motion'
@@ -63,6 +64,14 @@ export default function CityDetailsPage () {
 			fetchCityDetails()
 		}
 	},[ params.id,weatherAPI ] )
+
+	useEffect( () => {
+		analytics.pageView( `/city/${params.id}`,{
+			page: 'weather-city-details',
+			locationName: location?.name,
+			timestamp: Date.now()
+		} )
+	},[ location?.name,params.id ] )
 
 	const handleBack=() => {
 		router.back()

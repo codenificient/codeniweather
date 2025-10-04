@@ -5,7 +5,7 @@ import ForecastPanel from '@/components/ForecastPanel'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import LocationSearch from '@/components/LocationSearch'
 import { useWeather } from '@/contexts/WeatherContext'
-import { useAnalytics } from '@/hooks/useAnalytics'
+import { analytics } from '@/lib/analytics'
 import { WeatherAPI } from '@/lib/weather-api'
 import { Location,WeatherData } from '@/types/weather'
 import { AnimatePresence,motion } from 'framer-motion'
@@ -29,16 +29,16 @@ export default function Home () {
 	}=useWeather()
 
 	const weatherAPI=WeatherAPI.getInstance()
-	const analytics=useAnalytics()
 
 	// Track page view
 	useEffect( () => {
-		analytics.trackPageView( '/',{
+		analytics.pageView( '/',{
 			page: 'weather-dashboard',
 			hasCurrentLocation: !!currentLocation,
-			locationsCount: locations.length
+			locationsCount: locations.length,
+			timestamp: Date.now()
 		} )
-	},[ analytics,currentLocation,locations.length ] )
+	},[ locations.length, currentLocation ] )
 
 	const handleLocationSelect=async ( weather: WeatherData ) => {
 		const location: Location={
@@ -55,19 +55,13 @@ export default function Home () {
 			await addLocation( location )
 
 			// Track location addition
-			analytics.trackLocationAdded( {
+			analytics.track( 'location_added',{
 				name: location.name,
 				state: location.state,
 				country: location.country
 			} )
 		} catch ( err ) {
-			console.error( 'Error adding location:',err )
-
-			// Track error
-			analytics.trackAppError( 'location-add-failed','weather-dashboard',{
-				locationName: location.name,
-				error: err instanceof Error? err.message:'Unknown error'
-			} )
+			console.error( 'Error adding location:',err )			
 		}
 	}
 
@@ -212,7 +206,7 @@ export default function Home () {
 						<div className="glass-card-strong rounded-3xl p-12 max-w-lg mx-auto">
 							<div className="flex justify-center mb-6">
 								<div className="relative">
-									<img
+									<Image
 										src="/favicon.svg"
 										alt="CodeniWeather"
 										className="w-20 h-20 animate-pulse"
@@ -456,7 +450,7 @@ export default function Home () {
 					>
 						<div className="glass-card-strong rounded-3xl p-12 max-w-lg mx-auto animate-pulse-glow">
 							<div className="flex justify-center mb-6">
-								<img
+								<Image
 									src="/favicon.svg"
 									alt="CodeniWeather"
 									className="w-24 h-24"

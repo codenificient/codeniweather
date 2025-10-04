@@ -3,6 +3,7 @@
 import MapComponent from '@/components/MapComponent'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useWeather } from '@/contexts/WeatherContext'
+import { analytics } from '@/lib/analytics'
 import { Location as WeatherLocation } from '@/types/weather'
 import { useRouter } from 'next/navigation'
 import { useEffect,useState } from 'react'
@@ -89,6 +90,14 @@ export default function FullscreenMapPage () {
 		}
 	},[ router ] )
 
+	useEffect( () => {
+		analytics.pageView( '/map/fullscreen',{
+			page: 'weather-map-fullscreen',
+			locationsCount: locations.length,
+			selectedLayer,
+			timestamp: Date.now()
+		} )
+	},[ locations.length ] )
 
 	return (
 		<div className="fixed inset-0 bg-slate-100 dark:bg-slate-900 flex flex-col overflow-hidden">
