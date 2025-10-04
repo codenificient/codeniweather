@@ -1,281 +1,377 @@
+import { AnalyticsConfig,CodeniWeatherEvent } from '@/types/analytics'
 import { Analytics } from '@codenificient/analytics-sdk'
 
-// Check if analytics is properly configured
-const isAnalyticsConfigured=() => {
-	const apiKey=process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'proj_codeniweather_main'
-	const endpoint=process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app'
+class CodeniWeatherAnalytics {
+	private analytics: Analytics|null=null;
+	private config: AnalyticsConfig
+	private isInitialized=false;
 
-	console.log( '🔍 Analytics Configuration Check:' )
-	console.log( '  - API Key:',apiKey??'NOT SET' )
-	console.log( '  - Endpoint:',endpoint )
-	console.log( '  - NODE_ENV:',process.env.NODE_ENV )
-
-	// Check if we have valid configuration (not placeholder values)
-	const isValid=apiKey&&
-		apiKey!=='your_analytics_api_key_here'&&
-		endpoint&&
-		endpoint!=='https://your-analytics-api.com'&&
-		!endpoint.includes( 'your-analytics-api.com' )
-
-	console.log( '  - Is Valid Configuration:',isValid )
-	return isValid
-}
-
-// Create analytics instance only if properly configured
-let analytics: Analytics|null=null
-
-if ( isAnalyticsConfigured() ) {
-	try {
-		analytics=new Analytics( {
-			apiKey: process.env.NEXT_PUBLIC_ANALYTICS_API_KEY!,
-			endpoint: process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app',
-			debug: process.env.NODE_ENV==='development',
-		} )
-		console.log( '✅ Analytics SDK initialized successfully' )
-	} catch ( error ) {
-		console.warn( '⚠️ Failed to initialize Analytics SDK:',error )
-		analytics=null
+	constructor ( config: AnalyticsConfig ) {
+		this.config=config
+		this.initialize()
 	}
-} else {
-	console.log( 'ℹ️ Analytics not configured - using API proxy mode' )
-}
 
-// Enhanced analytics wrapper using SDK
-const enhancedAnalytics={
-	// Track page views using SDK
-	async pageView ( url: string,properties: Record<string,any>={} ) {
-		try {
-			if ( !analytics ) {
-				console.warn( '⚠️ Analytics SDK not initialized' )
-				return Promise.resolve()
-			}
-
-			console.log( '📊 Tracking page view via SDK:',url )
-
-			const enhancedProps={
-				...properties,
-				url,
-				pageTitle: properties.pageTitle||( typeof document!=='undefined'? document.title:'' ),
-				timestamp: new Date().toISOString(),
-				userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
-				referrer: typeof window!=='undefined'? document.referrer:'',
-			}
-
-			const result=await analytics.pageView( url,enhancedProps )
-			console.log( '✅ Page view tracked successfully:',result )
-			return result
-		} catch ( error ) {
-			console.warn( '⚠️ Analytics pageView failed:',error )
-			return Promise.resolve()
+	private initialize () {
+		if ( typeof window==='undefined'||!this.config.enabled ) {
+			return
 		}
-	},
 
-	// Track custom events using SDK
-	async track ( event: string,properties: Record<string,any>={},namespace?: string ) {
 		try {
-			if ( !analytics ) {
-				console.warn( '⚠️ Analytics SDK not initialized' )
-				return Promise.resolve()
+			this.analytics=new Analytics( {
+				apiKey: this.config.apiKey,
+				endpoint: this.config.endpoint,
+				debug: this.config.debug||false,
+			} )
+			this.isInitialized=true
+			console.log( '✅ Analytics initialized successfully' )
+		} catch ( error ) {
+			console.error( '⚠️ Failed to initialize analytics:',error )
+		}
+	}
+
+	private async trackEvent ( event: CodeniWeatherEvent ): Promise<void> {
+		if ( !this.isInitialized ) {
+			if ( this.config.debug ) {
+				console.log( 'Analytics not initialized, skipping event:',event )
 			}
+			return
+		}
 
-			console.log( '📊 Tracking event via SDK:',event )
+		try {
+			// Send directly to our API instead of using external SDK
+			await fetch( '/api/analytics/track',{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify( {
+					namespace: event.namespace||'default',
+					eventType: event.event,
+					properties: event.properties
+				} ),
+			} )
 
-			const enhancedProps={
-				...properties,
-				timestamp: new Date().toISOString(),
-				userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+			if ( this.config.debug ) {
+				console.log( '📊 Analytics event tracked:',event.event,event.properties )
+			}
+		} catch ( error ) {
+			console.error( '⚠️ Failed to track analytics event:',error )
+		}
+	}
+
+	// Page view tracking
+	async pageView ( page: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'page-view',
+			properties: {
+				page,
+				title: properties?.title||( typeof document!=='undefined'? document.title:'' ),
+				referrer: properties?.referrer||( typeof document!=='undefined'? document.referrer:'' ),
 				url: typeof window!=='undefined'? window.location.href:'',
-				referrer: typeof window!=='undefined'? document.referrer:'',
-			}
-
-			const result=await analytics.track( namespace||'general',event,enhancedProps )
-			console.log( '✅ Event tracked successfully:',result )
-			return result
-		} catch ( error ) {
-			console.warn( '⚠️ Analytics track failed:',error )
-			return Promise.resolve()
-		}
-	},
-
-	// Track blog views using SDK
-	async blogView ( slug: string,properties: Record<string,any>={} ) {
-		try {
-			if ( !analytics ) {
-				console.warn( '⚠️ Analytics SDK not initialized' )
-				return Promise.resolve()
-			}
-
-			console.log( '📊 Tracking blog view via SDK:',slug )
-
-			const enhancedProps={
 				...properties,
-				slug,
-				timestamp: new Date().toISOString(),
-				userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
-				url: typeof window!=='undefined'? window.location.href:'',
-				referrer: typeof window!=='undefined'? document.referrer:'',
-			}
-
-			const result=await analytics.blogView( slug,enhancedProps )
-			console.log( '✅ Blog view tracked successfully:',result )
-			return result
-		} catch ( error ) {
-			console.warn( '⚠️ Analytics blogView failed:',error )
-			return Promise.resolve()
-		}
-	},
-
-	// Track weather-related events with namespace
-	trackWeatherEvent ( event: string,properties?: Record<string,any> ) {
-		return this.track( event,properties,'weather-events' )
-	},
-
-	// Track user interactions with namespace
-	trackUserAction ( action: string,properties?: Record<string,any> ) {
-		return this.track( action,properties,'user-actions' )
-	},
-
-	// Track app performance with namespace
-	trackPerformance ( metric: string,value: number,properties?: Record<string,any> ) {
-		return this.track( metric,{
-			value,
-			...properties
-		},'performance' )
-	},
-
-	// Track errors with namespace
-	trackError ( error: string,properties?: Record<string,any> ) {
-		return this.track( 'error-occurred',{
-			error,
-			...properties
-		},'system-events' )
-	},
-
-	// Track feature usage with namespace
-	trackFeatureUsage ( feature: string,properties?: Record<string,any> ) {
-		return this.track( 'feature-used',{
-			feature,
-			...properties
-		},'feature-usage' )
-	},
+			},
+			namespace: 'page-views',
+		} )
+	}
 
 	// Weather-specific tracking methods
-	trackWeatherSearch ( query: string,resultsCount: number ) {
-		return this.trackWeatherEvent( 'search',{
-			query,
-			resultsCount,
-			searchType: 'city'
+	async trackWeatherSearch ( query: string,resultsCount: number ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: 'search',
+				query,
+				resultsCount,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+			},
+			namespace: 'weather-events',
 		} )
-	},
+	}
 
-	trackLocationAdded ( location: { name: string; state?: string; country: string } ) {
-		return this.trackWeatherEvent( 'location_added',{
-			locationName: location.name,
-			state: location.state,
-			country: location.country
+	async trackLocationAdded ( location: { name: string; state?: string; country: string } ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: 'location-added',
+				locationName: location.name,
+				metadata: {
+					state: location.state,
+					country: location.country,
+				},
+				page: typeof window!=='undefined'? window.location.pathname:'',
+			},
+			namespace: 'weather-events',
 		} )
-	},
+	}
 
-	trackLocationRemoved ( locationId: string,locationName: string ) {
-		return this.trackWeatherEvent( 'location_removed',{
-			locationId,
-			locationName
+	async trackLocationRemoved ( locationId: string,locationName: string ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: 'location-removed',
+				locationId,
+				locationName,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+			},
+			namespace: 'weather-events',
 		} )
-	},
+	}
 
-	trackWeatherLayerChanged ( layer: string,previousLayer?: string ) {
-		return this.trackWeatherEvent( 'layer_changed',{
-			layer,
-			previousLayer: previousLayer||'unknown'
+	async trackWeatherLayerChanged ( layer: string,previousLayer?: string ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: 'layer-changed',
+				layer,
+				metadata: { previousLayer },
+				page: typeof window!=='undefined'? window.location.pathname:'',
+			},
+			namespace: 'weather-events',
 		} )
-	},
+	}
 
-	trackForecastViewed ( locationId: string,days: number ) {
-		return this.trackWeatherEvent( 'forecast_viewed',{
-			locationId,
-			days
+	async trackForecastViewed ( locationId: string,days: number ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: 'forecast-viewed',
+				locationId,
+				days,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+			},
+			namespace: 'weather-events',
 		} )
-	},
+	}
 
-	trackMapInteraction ( interaction: string,properties?: Record<string,any> ) {
-		return this.trackWeatherEvent( 'map_interaction',{
-			interaction,
-			...properties
+	async trackMapInteraction ( interaction: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: 'map-interaction',
+				interaction,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+				...properties,
+			},
+			namespace: 'weather-events',
 		} )
-	},
+	}
 
-	// User action tracking methods
-	trackButtonClick ( buttonId: string,page: string,properties?: Record<string,any> ) {
-		return this.trackUserAction( 'button_click',{
+	// User action tracking
+	async trackUserAction ( action: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'user-action',
+			properties: {
+				action,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+				...properties,
+			},
+			namespace: 'user-actions',
+		} )
+	}
+
+	async trackButtonClick ( buttonId: string,page: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackUserAction( 'button-click',{
 			buttonId,
 			page,
-			...properties
+			...properties,
 		} )
-	},
+	}
 
-	trackNavigation ( from: string,to: string ) {
-		return this.trackUserAction( 'navigation',{
+	async trackNavigation ( from: string,to: string ): Promise<void> {
+		await this.trackUserAction( 'navigation',{
 			from,
-			to
+			to,
 		} )
-	},
+	}
 
-	trackSettingsChanged ( setting: string,value: any ) {
-		return this.trackUserAction( 'settings_changed',{
+	async trackSettingsChanged ( setting: string,value: any ): Promise<void> {
+		await this.trackUserAction( 'settings-changed',{
 			setting,
-			value
+			value,
 		} )
-	},
+	}
 
-	// Add a method to check if analytics is available
-	getAnalyticsInstance () {
-		return analytics
-	},
+	// Track weather-related events with namespace
+	async trackWeatherEvent ( event: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'weather-action',
+			properties: {
+				action: event,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+				...properties,
+			},
+			namespace: 'weather-events',
+		} )
+	}
 
-	// Fetch analytics data using SDK
-	async fetchAnalytics () {
+	// Track app performance with namespace
+	async trackPerformance ( metric: string,value: number,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'user-action',
+			properties: {
+				action: metric,
+				value,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+				...properties,
+			},
+			namespace: 'performance',
+		} )
+	}
+
+	// Error tracking
+	async trackError ( error: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'error',
+			properties: {
+				error,
+				message: properties?.message||error,
+				stack: properties?.stack,
+				context: properties?.context,
+				page: typeof window!=='undefined'? window.location.pathname:'',
+				...properties,
+			},
+			namespace: 'errors',
+		} )
+	}
+
+	// Track feature usage with namespace
+	async trackFeatureUsage ( feature: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackUserAction( 'feature-used',{
+			feature,
+			...properties,
+		} )
+	}
+
+	// Blog view tracking (for compatibility)
+	async blogView ( slug: string,properties?: Record<string,any> ): Promise<void> {
+		await this.trackEvent( {
+			event: 'page-view',
+			properties: {
+				page: `/blog/${slug}`,
+				slug,
+				...properties,
+			},
+			namespace: 'page-views',
+		} )
+	}
+
+	// Custom event tracking
+	async track ( event: string,properties?: Record<string,any>,namespace?: string ): Promise<void> {
+		await this.trackEvent( {
+			event: event as any,
+			properties: {
+				page: typeof window!=='undefined'? window.location.pathname:'',
+				...properties,
+			},
+			namespace: namespace||'custom',
+		} )
+	}
+
+	// Get analytics data
+	async fetchAnalytics (): Promise<any> {
+		if ( !this.isInitialized ) return null
+
 		try {
-			if ( !analytics ) {
-				console.warn( '⚠️ Analytics SDK not initialized' )
-				return null
+			// Fetch from our API
+			const response=await fetch( '/api/analytics/data' )
+			if ( !response.ok ) {
+				throw new Error( 'Failed to fetch analytics data' )
 			}
-
-			console.log( '📊 Fetching analytics data via SDK' )
-
-			// Use SDK's getAnalytics method (project identified by API key)
-			const data=await analytics.getAnalytics()
-			console.log( '✅ Analytics data retrieved:',data )
-			return data
+			return await response.json()
 		} catch ( error ) {
-			console.error( '❌ Failed to fetch analytics:',error )
+			console.error( '❌ Failed to get analytics data:',error )
 			return null
 		}
-	},
+	}
+
+	// Get analytics instance
+	getAnalyticsInstance () {
+		return this.analytics
+	}
 
 	// Test analytics connection
-	async testConnection () {
-		console.log( '🧪 Testing Analytics Connection:' )
-		console.log( '  - Analytics Instance:',analytics? 'Available':'NULL' )
-		console.log( '  - Configuration Valid:',isAnalyticsConfigured() )
-
-		if ( !analytics ) {
-			console.log( '❌ Cannot test - Analytics instance is null' )
+	async testConnection (): Promise<boolean> {
+		if ( !this.isInitialized ) {
+			console.log( '❌ Cannot test - Analytics not initialized' )
 			return false
 		}
 
 		try {
 			// Test with a simple track event
-			const testResult=await this.track( 'analytics-test',{
+			await this.track( 'analytics-test',{
 				test: true,
 				timestamp: new Date().toISOString()
 			} )
-			console.log( '✅ Analytics connection test successful:',testResult )
+			console.log( '✅ Analytics connection test successful' )
 			return true
 		} catch ( error ) {
 			console.error( '❌ Analytics connection test failed:',error )
 			return false
 		}
 	}
+
+	// Set user ID for tracking
+	setUserId ( userId: string ) {
+		this.config={ ...this.config,userId }
+	}
+
+	// Check if analytics is enabled
+	isEnabled (): boolean {
+		return this.isInitialized&&this.config.enabled!==false
+	}
 }
 
-export { enhancedAnalytics as analytics }
+// Create singleton instance
+let analyticsInstance: CodeniWeatherAnalytics|null=null
+
+export function initializeAnalytics ( config: AnalyticsConfig ): CodeniWeatherAnalytics {
+	if ( !analyticsInstance ) {
+		analyticsInstance=new CodeniWeatherAnalytics( config )
+	}
+	return analyticsInstance
+}
+
+export function getAnalyticsInstance (): CodeniWeatherAnalytics|null {
+	return analyticsInstance
+}
+
+// Default configuration
+const defaultConfig: AnalyticsConfig={
+	apiKey: process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'proj_codeniweather_main',
+	endpoint: process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app',
+	debug: process.env.NODE_ENV==='development',
+	enabled: process.env.NODE_ENV==='production'||process.env.NEXT_PUBLIC_ANALYTICS_ENABLED==='true',
+}
+
+// Initialize with default config
+if ( typeof window!=='undefined' ) {
+	initializeAnalytics( defaultConfig )
+}
+
+// Export singleton for convenience
+export const analytics=getAnalyticsInstance()||{
+	pageView: async () => {},
+	trackWeatherSearch: async () => {},
+	trackLocationAdded: async () => {},
+	trackLocationRemoved: async () => {},
+	trackWeatherLayerChanged: async () => {},
+	trackForecastViewed: async () => {},
+	trackMapInteraction: async () => {},
+	trackUserAction: async () => {},
+	trackButtonClick: async () => {},
+	trackNavigation: async () => {},
+	trackSettingsChanged: async () => {},
+	trackWeatherEvent: async () => {},
+	trackPerformance: async () => {},
+	trackError: async () => {},
+	trackFeatureUsage: async () => {},
+	blogView: async () => {},
+	track: async () => {},
+	fetchAnalytics: async () => null,
+	getAnalyticsInstance: () => null,
+	testConnection: async () => false,
+	setUserId: () => {},
+	isEnabled: () => false,
+}
+
+export { CodeniWeatherAnalytics }
