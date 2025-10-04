@@ -3,7 +3,7 @@ import { Analytics } from '@codenificient/analytics-sdk'
 // Analytics configuration
 const ANALYTICS_CONFIG={
 	apiKey: process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'codeniweather-analytics-key',
-	endpoint: process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics.codenificient.com',
+	endpoint: '/api/analytics',
 	debug: process.env.NODE_ENV==='development',
 	timeout: 5000
 }
