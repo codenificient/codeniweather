@@ -6,7 +6,7 @@ const isAnalyticsConfigured=() => {
 	const endpoint=process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app'
 
 	console.log( '🔍 Analytics Configuration Check:' )
-	console.log( '  - API Key:',apiKey? `${apiKey.substring( 0,8 )}...`:'NOT SET' )
+	console.log( '  - API Key:',apiKey??'NOT SET' )
 	console.log( '  - Endpoint:',endpoint )
 	console.log( '  - NODE_ENV:',process.env.NODE_ENV )
 
