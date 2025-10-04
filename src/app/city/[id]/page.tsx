@@ -67,9 +67,9 @@ export default function CityDetailsPage () {
 
 	useEffect( () => {
 		analytics.pageView( `/city/${params.id}`,{
-			page: 'weather-city-details',
-			locationName: location?.name,
-			timestamp: Date.now()
+			title: 'weather-city-details',
+			referrer: location?.name,
+			userId: "cmfombacy0001l204jdhysr04"
 		} )
 	},[ location?.name,params.id ] )
 

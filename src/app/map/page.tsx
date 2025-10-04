@@ -26,10 +26,9 @@ export default function MapPage () {
 	// Track page view
 	useEffect( () => {
 		analytics.pageView( '/map',{
-			page: 'weather-map',
-			locationsCount: locations.length,
-			hasWeatherData: Object.keys( weatherData ).length>0,
-			timestamp: Date.now()
+			title: 'weather-map',
+			referrer: 'weather-map',
+			userId: "cmfombacy0001l204jdhysr04",
 		} )
 	},[ locations.length,weatherData ] )
 

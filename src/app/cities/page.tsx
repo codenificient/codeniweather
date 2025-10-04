@@ -16,10 +16,9 @@ export default function CitiesPage () {
 	// Track page view
 	useEffect( () => {
 		analytics.pageView( '/cities',{
-			page: 'cities-list',
-			citiesCount: allLocations.length,
-			hasCurrentLocation: !!currentLocation,
-			timestamp: Date.now()
+			title: 'cities-list',
+			referrer: 'cities-list',
+			userId: "cmfombacy0001l204jdhysr04"
 		} )
 	},[ allLocations.length,currentLocation ] )
 

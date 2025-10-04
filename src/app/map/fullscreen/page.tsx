@@ -92,7 +92,9 @@ export default function FullscreenMapPage () {
 
 	useEffect( () => {
 		analytics.pageView( '/map/fullscreen',{
-			page: 'weather-map-fullscreen',
+			title: 'weather-map-fullscreen',
+			referrer: 'weather-map-fullscreen',
+			userId: "cmfombacy0001l204jdhysr04",
 			locationsCount: locations.length,
 			selectedLayer,
 			timestamp: Date.now()
