@@ -43,7 +43,7 @@ export class AnalyticsService {
 	// Track weather-related events
 	async trackWeatherEvent ( event: string,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( event,properties||{},'weather-events' )
+			await this.analytics.track( 'weather-events',event,properties )
 		} catch ( error ) {
 			console.warn( 'Analytics weather event tracking failed:',error )
 		}
@@ -52,7 +52,7 @@ export class AnalyticsService {
 	// Track user interactions
 	async trackUserAction ( action: string,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( action,properties||{},'user-actions' )
+			await this.analytics.track( 'user-actions',action,properties )
 		} catch ( error ) {
 			console.warn( 'Analytics user action tracking failed:',error )
 		}
@@ -61,11 +61,11 @@ export class AnalyticsService {
 	// Track app performance
 	async trackPerformance ( metric: string,value: number,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( 'performance-metric',{
+			await this.analytics.track( 'performance','performance-metric',{
 				metric,
 				value,
 				...properties
-			},'performance' )
+			} )
 		} catch ( error ) {
 			console.warn( 'Analytics performance tracking failed:',error )
 		}
@@ -74,10 +74,10 @@ export class AnalyticsService {
 	// Track errors
 	async trackError ( error: string,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( 'error-occurred',{
+			await this.analytics.track( 'system-events','error-occurred',{
 				error,
 				...properties
-			},'system-events' )
+			} )
 		} catch ( trackingError ) {
 			console.warn( 'Analytics error tracking failed:',trackingError )
 		}
@@ -86,10 +86,10 @@ export class AnalyticsService {
 	// Track feature usage
 	async trackFeatureUsage ( feature: string,properties?: Record<string,any> ) {
 		try {
-			await this.analytics.track( 'feature-used',{
+			await this.analytics.track( 'feature-usage','feature-used',{
 				feature,
 				...properties
-			},'feature-usage' )
+			} )
 		} catch ( error ) {
 			console.warn( 'Analytics feature usage tracking failed:',error )
 		}
@@ -99,12 +99,12 @@ export class AnalyticsService {
 	async trackBatch ( events: Array<{ event: string; properties?: Record<string,any>; namespace?: string }> ) {
 		try {
 			const eventData=events.map( ( { event,properties,namespace } ) => ( {
-				event,
+				namespace: namespace||'general',
+				eventType: event,
 				properties: {
 					...properties,
 					timestamp: Date.now()
-				},
-				namespace: namespace||'general'
+				}
 			} ) )
 
 			await this.analytics.trackBatch( eventData )
@@ -114,9 +114,16 @@ export class AnalyticsService {
 	}
 
 	// Get analytics data
-	async getAnalytics ( projectId?: string ) {
+	async getAnalytics ( options?: {
+		namespace?: string;
+		eventType?: string;
+		startDate?: string;
+		endDate?: string;
+		groupBy?: 'day'|'week'|'month';
+		limit?: number;
+	} ) {
 		try {
-			return await this.analytics.getAnalytics( projectId )
+			return await this.analytics.getAnalytics( options )
 		} catch ( error ) {
 			console.warn( 'Analytics data retrieval failed:',error )
 			return null
