@@ -261,6 +261,8 @@ export default function Home () {
 									<Image
 										src="/favicon.svg"
 										alt="CodeniWeather"
+										width={80}
+										height={80}
 										className="w-20 h-20 animate-pulse"
 									/>
 									<div className="absolute inset-0 flex items-center justify-center">
@@ -505,6 +507,8 @@ export default function Home () {
 								<Image
 									src="/favicon.svg"
 									alt="CodeniWeather"
+									width={96}
+									height={96}
 									className="w-24 h-24"
 								/>
 							</div>
