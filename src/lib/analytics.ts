@@ -2,7 +2,7 @@ import { Analytics } from '@codenificient/analytics-sdk'
 
 // Check if analytics is properly configured
 const isAnalyticsConfigured=() => {
-	const apiKey=process.env.NEXT_PUBLIC_ANALYTICS_API_KEY || 'proj_codeniweather_main'
+	const apiKey=process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'proj_codeniweather_main'
 	const endpoint=process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app'
 
 	console.log( '🔍 Analytics Configuration Check:' )
@@ -40,36 +40,28 @@ if ( isAnalyticsConfigured() ) {
 	console.log( 'ℹ️ Analytics not configured - using API proxy mode' )
 }
 
-// Enhanced analytics wrapper with API proxy
+// Enhanced analytics wrapper using SDK
 const enhancedAnalytics={
-	// Use API proxy for page views
+	// Track page views using SDK
 	async pageView ( url: string,properties: Record<string,any>={} ) {
 		try {
-			console.log( '📊 Tracking page view via API proxy:',url )
-
-			const response=await fetch( '/api/analytics',{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify( {
-					event: 'page_view',
-					properties: {
-						...properties,
-						url,
-						pageTitle: properties.pageTitle||document.title,
-						timestamp: new Date().toISOString(),
-						userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
-						referrer: typeof window!=='undefined'? document.referrer:'',
-					}
-				} )
-			} )
-
-			if ( !response.ok ) {
-				throw new Error( `API request failed: ${response.status}` )
+			if ( !analytics ) {
+				console.warn( '⚠️ Analytics SDK not initialized' )
+				return Promise.resolve()
 			}
 
-			const result=await response.json()
+			console.log( '📊 Tracking page view via SDK:',url )
+
+			const enhancedProps={
+				...properties,
+				url,
+				pageTitle: properties.pageTitle||( typeof document!=='undefined'? document.title:'' ),
+				timestamp: new Date().toISOString(),
+				userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+				referrer: typeof window!=='undefined'? document.referrer:'',
+			}
+
+			const result=await analytics.pageView( url,enhancedProps )
 			console.log( '✅ Page view tracked successfully:',result )
 			return result
 		} catch ( error ) {
@@ -78,32 +70,25 @@ const enhancedAnalytics={
 		}
 	},
 
-	async track ( event: string,properties: Record<string,any>={} ) {
+	// Track custom events using SDK
+	async track ( event: string,properties: Record<string,any>={},namespace?: string ) {
 		try {
-			console.log( '📊 Tracking event via API proxy:',event )
-
-			const response=await fetch( '/api/analytics',{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify( {
-					event,
-					properties: {
-						...properties,
-						timestamp: new Date().toISOString(),
-						userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
-						url: typeof window!=='undefined'? window.location.href:'',
-						referrer: typeof window!=='undefined'? document.referrer:'',
-					}
-				} )
-			} )
-
-			if ( !response.ok ) {
-				throw new Error( `API request failed: ${response.status}` )
+			if ( !analytics ) {
+				console.warn( '⚠️ Analytics SDK not initialized' )
+				return Promise.resolve()
 			}
 
-			const result=await response.json()
+			console.log( '📊 Tracking event via SDK:',event )
+
+			const enhancedProps={
+				...properties,
+				timestamp: new Date().toISOString(),
+				userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+				url: typeof window!=='undefined'? window.location.href:'',
+				referrer: typeof window!=='undefined'? document.referrer:'',
+			}
+
+			const result=await analytics.track( namespace||'general',event,enhancedProps )
 			console.log( '✅ Event tracked successfully:',result )
 			return result
 		} catch ( error ) {
@@ -112,33 +97,26 @@ const enhancedAnalytics={
 		}
 	},
 
+	// Track blog views using SDK
 	async blogView ( slug: string,properties: Record<string,any>={} ) {
 		try {
-			console.log( '📊 Tracking blog view via API proxy:',slug )
-
-			const response=await fetch( '/api/analytics',{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify( {
-					event: 'blog_view',
-					properties: {
-						...properties,
-						slug,
-						timestamp: new Date().toISOString(),
-						userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
-						url: typeof window!=='undefined'? window.location.href:'',
-						referrer: typeof window!=='undefined'? document.referrer:'',
-					}
-				} )
-			} )
-
-			if ( !response.ok ) {
-				throw new Error( `API request failed: ${response.status}` )
+			if ( !analytics ) {
+				console.warn( '⚠️ Analytics SDK not initialized' )
+				return Promise.resolve()
 			}
 
-			const result=await response.json()
+			console.log( '📊 Tracking blog view via SDK:',slug )
+
+			const enhancedProps={
+				...properties,
+				slug,
+				timestamp: new Date().toISOString(),
+				userAgent: typeof window!=='undefined'? window.navigator.userAgent:'server',
+				url: typeof window!=='undefined'? window.location.href:'',
+				referrer: typeof window!=='undefined'? document.referrer:'',
+			}
+
+			const result=await analytics.blogView( slug,enhancedProps )
 			console.log( '✅ Blog view tracked successfully:',result )
 			return result
 		} catch ( error ) {
@@ -147,48 +125,38 @@ const enhancedAnalytics={
 		}
 	},
 
-	// Track weather-related events
+	// Track weather-related events with namespace
 	trackWeatherEvent ( event: string,properties?: Record<string,any> ) {
-		return this.track( `weather_${event}`,{
-			...properties,
-			category: 'weather'
-		} )
+		return this.track( event,properties,'weather-events' )
 	},
 
-	// Track user interactions
+	// Track user interactions with namespace
 	trackUserAction ( action: string,properties?: Record<string,any> ) {
-		return this.track( `user_${action}`,{
-			...properties,
-			category: 'user_action'
-		} )
+		return this.track( action,properties,'user-actions' )
 	},
 
-	// Track app performance
+	// Track app performance with namespace
 	trackPerformance ( metric: string,value: number,properties?: Record<string,any> ) {
-		return this.track( 'performance_metric',{
-			metric,
+		return this.track( metric,{
 			value,
-			...properties,
-			category: 'performance'
-		} )
+			...properties
+		},'performance' )
 	},
 
-	// Track errors
+	// Track errors with namespace
 	trackError ( error: string,properties?: Record<string,any> ) {
-		return this.track( 'error_occurred',{
+		return this.track( 'error-occurred',{
 			error,
-			...properties,
-			category: 'error'
-		} )
+			...properties
+		},'system-events' )
 	},
 
-	// Track feature usage
+	// Track feature usage with namespace
 	trackFeatureUsage ( feature: string,properties?: Record<string,any> ) {
-		return this.track( 'feature_used',{
+		return this.track( 'feature-used',{
 			feature,
-			...properties,
-			category: 'feature'
-		} )
+			...properties
+		},'feature-usage' )
 	},
 
 	// Add a method to check if analytics is available
@@ -198,12 +166,12 @@ const enhancedAnalytics={
 
 	// Fetch analytics data via API proxy
 	async fetchAnalytics ( options?: {
-		namespace?: string;
-		eventType?: string;
-		startDate?: string;
-		endDate?: string;
-		groupBy?: 'day'|'week'|'month';
-		limit?: number;
+		namespace?: string
+		eventType?: string
+		startDate?: string
+		endDate?: string
+		groupBy?: 'day'|'week'|'month'
+		limit?: number
 	} ) {
 		try {
 			// Build query string from options
