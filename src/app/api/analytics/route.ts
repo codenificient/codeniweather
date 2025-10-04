@@ -33,12 +33,11 @@ export async function POST ( request: NextRequest ) {
 
 		// Send to your analytics dashboard
 		try {
+			// Match tioyedev2024 payload structure exactly
 			const payload={
-				projectId: process.env.ANALYTICS_API_KEY||'proj_codeniweather_main',
 				event,
 				properties: enhancedProperties,
-				source: 'codeniweather',
-				timestamp: enhancedProperties.timestamp
+				source: 'codeniweather'
 			}
 
 			console.log( '📤 Sending to analytics dashboard:',JSON.stringify( payload,null,2 ) )
@@ -94,6 +93,9 @@ export async function GET ( request: NextRequest ) {
 		// Build query string for filtering
 		const queryParams: Record<string,string>={}
 
+		// Required: API key to identify the project
+		queryParams.apiKey=process.env.ANALYTICS_API_KEY||'proj_codeniweather_main'
+
 		// Optional filters
 		if ( searchParams.get( 'namespace' ) ) queryParams.namespace=searchParams.get( 'namespace' )!
 		if ( searchParams.get( 'eventType' ) ) queryParams.eventType=searchParams.get( 'eventType' )!
@@ -103,7 +105,7 @@ export async function GET ( request: NextRequest ) {
 		if ( searchParams.get( 'limit' ) ) queryParams.limit=searchParams.get( 'limit' )!
 
 		const queryString=new URLSearchParams( queryParams ).toString()
-		const analyticsUrl=`https://analytics-dashboard-phi-six.vercel.app/api/analytics${queryString? `?${queryString}`:''}`
+		const analyticsUrl=`https://analytics-dashboard-phi-six.vercel.app/api/analytics?${queryString}`
 
 		console.log( '📊 Fetching analytics from:',analyticsUrl )
 
