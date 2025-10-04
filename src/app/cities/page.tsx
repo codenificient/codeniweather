@@ -98,7 +98,15 @@ export default function CitiesPage () {
 											</div>
 											<div className="flex items-center gap-2">
 												<button
-													onClick={() => setCurrentLocation( location )}
+													onClick={() => {
+														setCurrentLocation( location )
+														// Track setting current location
+														analytics.trackUserAction( 'set-current-location',{
+															locationId: location.id,
+															locationName: location.name,
+															page: 'cities-loading-state'
+														} )
+													}}
 													className={`p-2 rounded-xl transition-all duration-300 ${isCurrentLocation
 														? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
 														:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'

@@ -11,7 +11,7 @@ import { Location,WeatherData } from '@/types/weather'
 import { AnimatePresence,motion } from 'framer-motion'
 // Weather icons replaced with emojis
 import Image from 'next/image'
-import { useEffect,useState } from 'react'
+import { useEffect } from 'react'
 
 export default function Home () {
 	const {
@@ -30,11 +30,6 @@ export default function Home () {
 
 	const weatherAPI=WeatherAPI.getInstance()
 
-	// Analytics testing state
-	const [ analyticsData,setAnalyticsData ]=useState<any>( null )
-	const [ testingAnalytics,setTestingAnalytics ]=useState( false )
-	const [ fetchingAnalytics,setFetchingAnalytics ]=useState( false )
-
 	// Track page view
 	useEffect( () => {
 		analytics.pageView( '/',{
@@ -43,50 +38,6 @@ export default function Home () {
 			userId: "cmfombacy0001l204jdhysr04",
 		} )
 	},[ locations.length,currentLocation ] )
-
-	// Send test analytics event
-	const handleTestAnalytics=async () => {
-		setTestingAnalytics( true )
-		try {
-			await analytics.track( 'analytics_test',{
-				title: 'Landing Page Test',
-				referrer: new Date().toISOString(),
-				userId: "cmfombacy0001l204jdhysr04",
-			}, 'user-actions' )
-			console.log( '✅ Test event sent successfully' )
-			alert( 'Test analytics event sent successfully! Check console for details.' )
-		} catch ( error ) {
-			console.error( '❌ Failed to send test event:',error )
-			alert( 'Failed to send test event. Check console for details.' )
-		} finally {
-			setTestingAnalytics( false )
-		}
-	}
-
-	// Fetch analytics data using SDK (project identified by API key)
-	const handleFetchAnalytics=async () => {
-		setFetchingAnalytics( true )
-		try {
-			// Fetch all analytics data for the configured project
-			// Project is identified by the API key, not namespace
-			const data=await analytics.fetchAnalytics()
-
-			if ( data ) {
-				setAnalyticsData( data )
-				console.log( '📊 Analytics data:',data )
-				console.log( '📈 Total Visitors:',data.totalVisitors )
-				console.log( '📈 Visitors Today:',data.visitorsToday )
-				console.log( '🌍 Top Countries:',data.topCountries )
-			} else {
-				alert( 'No analytics data available. Check console for details.' )
-			}
-		} catch ( error ) {
-			console.error( '❌ Failed to fetch analytics:',error )
-			alert( 'Failed to fetch analytics. Check console for details.' )
-		} finally {
-			setFetchingAnalytics( false )
-		}
-	}
 
 	const handleLocationSelect=async ( weather: WeatherData ) => {
 		const location: Location={
@@ -522,76 +473,6 @@ export default function Home () {
 						</div>
 					</motion.div>
 				)}
-
-				{/* Analytics Testing Panel */}
-				<motion.div
-					initial={{ opacity: 0,y: 30 }}
-					animate={{ opacity: 1,y: 0 }}
-					transition={{ duration: 0.6,delay: 0.2 }}
-					className="mt-8"
-				>
-					<div className="glass-card-strong rounded-3xl p-8 max-w-4xl mx-auto">
-						<div className="flex items-center justify-between mb-6">
-							<div className="flex items-center space-x-3">
-								<div className="p-2 bg-purple-500/20 rounded-xl">
-									<span className="text-2xl">📊</span>
-								</div>
-								<h2 className="text-2xl font-bold gradient-text-primary">Analytics Testing</h2>
-							</div>
-							<span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">
-								API Key: proj_codeniweather_main
-							</span>
-						</div>
-
-						<div className="grid md:grid-cols-2 gap-4 mb-6">
-							<button
-								onClick={handleTestAnalytics}
-								disabled={testingAnalytics}
-								className="glass-card p-6 rounded-2xl hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								<div className="flex items-center space-x-3 mb-2">
-									<span className="text-3xl">{testingAnalytics? '⏳':'🚀'}</span>
-									<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-										Send Test Event
-									</h3>
-								</div>
-								<p className="text-sm text-slate-600 dark:text-slate-400">
-									{testingAnalytics? 'Sending test event...':'Click to send a test analytics event'}
-								</p>
-							</button>
-
-							<button
-								onClick={handleFetchAnalytics}
-								disabled={fetchingAnalytics}
-								className="glass-card p-6 rounded-2xl hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								<div className="flex items-center space-x-3 mb-2">
-									<span className="text-3xl">{fetchingAnalytics? '⏳':'📈'}</span>
-									<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-										Fetch Analytics
-									</h3>
-								</div>
-								<p className="text-sm text-slate-600 dark:text-slate-400">
-									{fetchingAnalytics? 'Fetching data...':'Click to fetch analytics data'}
-								</p>
-							</button>
-						</div>
-
-						{analyticsData&&(
-							<div className="glass-card rounded-2xl p-6">
-								<div className="flex items-center space-x-2 mb-4">
-									<span className="text-xl">📊</span>
-									<h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-										Analytics Data
-									</h3>
-								</div>
-								<pre className="bg-slate-900 dark:bg-slate-950 text-green-400 p-4 rounded-xl overflow-x-auto text-xs">
-									{JSON.stringify( analyticsData,null,2 )}
-								</pre>
-							</div>
-						)}
-					</div>
-				</motion.div>
 			</motion.div>
 		</div>
 	)

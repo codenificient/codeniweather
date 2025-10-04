@@ -106,6 +106,12 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 							onClick={( e ) => {
 								e.stopPropagation()
 								onSetCurrent()
+								// Track setting current location
+								analytics.trackUserAction( 'set-current-location',{
+									locationId: location.id,
+									locationName: location.name,
+									page: 'cities'
+								} )
 							}}
 							className={`p-2 rounded-xl transition-all duration-300 group/set-current ${isCurrentLocation
 								? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
