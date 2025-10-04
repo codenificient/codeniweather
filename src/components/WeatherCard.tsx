@@ -1,6 +1,6 @@
 'use client'
 
-import { useAnalytics } from '@/hooks/useAnalytics'
+import { analytics } from '@/lib/analytics'
 import { WeatherAPI } from '@/lib/weather-api'
 import { Location,WeatherData } from '@/types/weather'
 import { motion } from 'framer-motion'
@@ -27,7 +27,6 @@ const WeatherCard: React.FC<WeatherCardProps>=( {
 } ) => {
 	const weatherAPI=WeatherAPI.getInstance()
 	const router=useRouter()
-	const analytics=useAnalytics()
 
 	const handleCardClick=() => {
 		if ( onSetCurrent ) {

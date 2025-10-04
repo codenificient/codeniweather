@@ -159,6 +159,74 @@ const enhancedAnalytics={
 		},'feature-usage' )
 	},
 
+	// Weather-specific tracking methods
+	trackWeatherSearch ( query: string,resultsCount: number ) {
+		return this.trackWeatherEvent( 'search',{
+			query,
+			resultsCount,
+			searchType: 'city'
+		} )
+	},
+
+	trackLocationAdded ( location: { name: string; state?: string; country: string } ) {
+		return this.trackWeatherEvent( 'location_added',{
+			locationName: location.name,
+			state: location.state,
+			country: location.country
+		} )
+	},
+
+	trackLocationRemoved ( locationId: string,locationName: string ) {
+		return this.trackWeatherEvent( 'location_removed',{
+			locationId,
+			locationName
+		} )
+	},
+
+	trackWeatherLayerChanged ( layer: string,previousLayer?: string ) {
+		return this.trackWeatherEvent( 'layer_changed',{
+			layer,
+			previousLayer: previousLayer||'unknown'
+		} )
+	},
+
+	trackForecastViewed ( locationId: string,days: number ) {
+		return this.trackWeatherEvent( 'forecast_viewed',{
+			locationId,
+			days
+		} )
+	},
+
+	trackMapInteraction ( interaction: string,properties?: Record<string,any> ) {
+		return this.trackWeatherEvent( 'map_interaction',{
+			interaction,
+			...properties
+		} )
+	},
+
+	// User action tracking methods
+	trackButtonClick ( buttonId: string,page: string,properties?: Record<string,any> ) {
+		return this.trackUserAction( 'button_click',{
+			buttonId,
+			page,
+			...properties
+		} )
+	},
+
+	trackNavigation ( from: string,to: string ) {
+		return this.trackUserAction( 'navigation',{
+			from,
+			to
+		} )
+	},
+
+	trackSettingsChanged ( setting: string,value: any ) {
+		return this.trackUserAction( 'settings_changed',{
+			setting,
+			value
+		} )
+	},
+
 	// Add a method to check if analytics is available
 	getAnalyticsInstance () {
 		return analytics

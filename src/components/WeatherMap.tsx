@@ -2,7 +2,7 @@
 
 import { useTheme } from '@/contexts/ThemeContext'
 import { useWeather } from '@/contexts/WeatherContext'
-import { useAnalytics } from '@/hooks/useAnalytics'
+import { analytics } from '@/lib/analytics'
 import { getWeatherIcon } from '@/lib/weather-icons'
 import { Map } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
@@ -19,7 +19,6 @@ interface WeatherMapProps {
 const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 	const { weatherData,locations,currentLocation,addLocation,removeLocation,searchCities,setCurrentLocation }=useWeather()
 	const { theme }=useTheme()
-	const analytics=useAnalytics()
 	const [ selectedLayer,setSelectedLayer ]=useState( 'temperature' )
 	const [ isSearching,setIsSearching ]=useState( false )
 	const [ searchQuery,setSearchQuery ]=useState( '' )

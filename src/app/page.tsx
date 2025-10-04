@@ -38,10 +38,9 @@ export default function Home () {
 	// Track page view
 	useEffect( () => {
 		analytics.pageView( '/',{
-			page: 'weather-dashboard',
-			hasCurrentLocation: !!currentLocation,
-			locationsCount: locations.length,
-			timestamp: Date.now()
+			title: 'weather-dashboard',
+			referrer: document.referrer,
+			userId: "cmfombacy0001l204jdhysr04",
 		} )
 	},[ locations.length,currentLocation ] )
 
@@ -50,11 +49,10 @@ export default function Home () {
 		setTestingAnalytics( true )
 		try {
 			await analytics.track( 'analytics_test',{
-				source: 'landing_page_test',
-				timestamp: new Date().toISOString(),
-				test: true,
-				randomValue: Math.random()
-			} )
+				title: 'Landing Page Test',
+				referrer: new Date().toISOString(),
+				userId: "cmfombacy0001l204jdhysr04",
+			}, 'user-actions' )
 			console.log( '✅ Test event sent successfully' )
 			alert( 'Test analytics event sent successfully! Check console for details.' )
 		} catch ( error ) {
