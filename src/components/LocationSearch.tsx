@@ -22,7 +22,7 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 	const [ showResults,setShowResults ]=useState( false )
 	const [ searchLoading,setSearchLoading ]=useState( false )
 	const inputRef=useRef<HTMLInputElement>( null )
-	const searchTimeoutRef=useRef<NodeJS.Timeout>()
+	const searchTimeoutRef=useRef<NodeJS.Timeout>( undefined )
 	const lastSearchRef=useRef<string>( '' )
 	const searchCooldownRef=useRef<number>( 0 )
 
