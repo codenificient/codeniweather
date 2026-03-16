@@ -43,6 +43,7 @@ export default function RootLayout ( {
 	return (
 		<html lang="en" className={inter.variable}>
 			<head>
+        <script defer src="https://analytics.afrotomation.com/track" data-website-id="000208fa-ccd0-4f92-9d30-37ff05d7ae67"></script>
 				<link rel="icon" href="/favicon.ico" sizes="any" />
 				<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 				<link rel="apple-touch-icon" href="/favicon.svg" />
