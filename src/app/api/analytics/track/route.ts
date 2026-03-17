@@ -1,7 +1,7 @@
 import type { AnalyticsResponse } from '@codenificient/analytics-sdk'
 import { NextRequest,NextResponse } from 'next/server'
 
-const ANALYTICS_ENDPOINT='https://analytics-dashboard-phi-six.vercel.app/api'
+const ANALYTICS_ENDPOINT='https://codenalytics.vercel.app/api'
 const API_KEY=process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'proj_codeniweather_main'
 
 interface EventData {

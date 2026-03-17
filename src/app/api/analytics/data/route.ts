@@ -1,6 +1,6 @@
 import { NextRequest,NextResponse } from 'next/server'
 
-const ANALYTICS_ENDPOINT=process.env.ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app/api'
+const ANALYTICS_ENDPOINT=process.env.ANALYTICS_ENDPOINT||'https://codenalytics.vercel.app/api'
 const ANALYTICS_API_KEY=process.env.ANALYTICS_API_KEY||process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'proj_codeniweather_main'
 
 export async function GET ( request: NextRequest ) {
