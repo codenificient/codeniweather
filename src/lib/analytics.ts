@@ -335,7 +335,7 @@ export function getAnalyticsInstance (): CodeniWeatherAnalytics|null {
 // Default configuration
 const defaultConfig: AnalyticsConfig={
 	apiKey: process.env.NEXT_PUBLIC_ANALYTICS_API_KEY||'proj_codeniweather_main',
-	endpoint: process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://analytics-dashboard-phi-six.vercel.app',
+	endpoint: process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT||'https://codenalytics.vercel.app',
 	debug: process.env.NODE_ENV==='development',
 	enabled: process.env.NODE_ENV==='production'||process.env.NEXT_PUBLIC_ANALYTICS_ENABLED==='true',
 }
