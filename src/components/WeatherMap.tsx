@@ -99,7 +99,6 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 		setIsSearching( true )
 		try {
 			const results=await searchCities( searchQuery )
-			console.log( 'Search results:',results )
 			setSearchResults( results )
 			setShowSearchResults( true )
 		} catch ( error ) {
@@ -271,7 +270,6 @@ const WeatherMap: React.FC<WeatherMapProps>=( { className='' } ) => {
 						<button
 							key={layer.id}
 							onClick={() => {
-								console.log( `🌧️ Weather layer button clicked: ${layer.id}` )
 								setSelectedLayer( layer.id )
 								// Track layer change
 								analytics.trackWeatherLayerChanged( layer.id )

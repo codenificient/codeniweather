@@ -108,14 +108,12 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 	// Load saved locations and units on mount
 	useEffect( () => {
 		const savedLocations=StorageService.getLocations()
-		console.log( 'Loading saved locations:',savedLocations )
 
 		// If no saved locations, use default cities
 		const locationsToLoad=savedLocations.length>0? savedLocations:getDefaultCities()
 
 		// If using default cities, save them to storage
 		if ( savedLocations.length===0 ) {
-			console.log( 'No saved locations found, using default cities' )
 			locationsToLoad.forEach( location => {
 				StorageService.addLocation( location )
 			} )
@@ -143,7 +141,6 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		// Fetch weather data for loaded locations
 		if ( locationsToLoad.length>0 ) {
 			locationsToLoad.forEach( location => {
-				console.log( `Fetching weather for location: ${location.name} (${location.lat}, ${location.lon})` )
 				fetchWeatherData( location )
 			} )
 		}
@@ -152,7 +149,6 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 	// Set first location as current location if no current location is set
 	useEffect( () => {
 		if ( state.locations.length>0&&!state.currentLocation ) {
-			console.log( 'Setting first location as current location:',state.locations[ 0 ].name )
 			dispatch( { type: 'SET_CURRENT_LOCATION',payload: state.locations[ 0 ] } )
 			// Save to localStorage
 			localStorage.setItem( 'codeniweather-current-location',JSON.stringify( state.locations[ 0 ] ) )

@@ -11,7 +11,6 @@ export class WeatherAPI {
 
 	private constructor() {
 		this.apiKey=API_KEY
-		console.log( 'WeatherAPI initialized with API key:',this.apiKey? `${this.apiKey.substring( 0,8 )}...`:'NOT SET' )
 	}
 
 	public static getInstance (): WeatherAPI {
@@ -99,13 +98,11 @@ export class WeatherAPI {
 		}
 
 		try {
-			console.log( `Searching for cities using MapTiler: "${query}"` )
 
 			// Use MapTiler geocoding API for city search
 			const geocodingApi=GeocodingAPI.getInstance()
 			const locations=await geocodingApi.searchCities( query )
 
-			console.log( `Found ${locations.length} locations using MapTiler for "${query}"` )
 
 			if ( locations.length===0 ) {
 				return []
@@ -133,7 +130,6 @@ export class WeatherAPI {
 			const weatherResults=await Promise.all( weatherPromises )
 			const validResults=weatherResults.filter( ( data ) => data!==null ) as WeatherData[]
 
-			console.log( `Successfully fetched weather for ${validResults.length} locations using MapTiler` )
 			return validResults
 		} catch ( error: any ) {
 			console.error( 'City search error using MapTiler:',error.response?.data||error.message )

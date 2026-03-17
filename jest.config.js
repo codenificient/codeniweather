@@ -5,11 +5,14 @@ module.exports = {
   // Setup files
   setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
 
-  // Test file patterns
+  // Test file patterns (exclude e2e - those use Playwright, not Jest)
   testMatch: [
-    "<rootDir>/tests/**/*.test.js",
-    "<rootDir>/tests/**/*.test.ts",
-    "<rootDir>/tests/**/*.test.tsx",
+    "<rootDir>/tests/unit/**/*.test.js",
+    "<rootDir>/tests/unit/**/*.test.ts",
+    "<rootDir>/tests/unit/**/*.test.tsx",
+    "<rootDir>/tests/integration/**/*.test.js",
+    "<rootDir>/tests/integration/**/*.test.ts",
+    "<rootDir>/tests/integration/**/*.test.tsx",
   ],
 
   // Coverage configuration

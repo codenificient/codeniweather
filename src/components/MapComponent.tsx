@@ -97,7 +97,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	const setAnimationTimeValue=( time: number ) => {
 		// MapTiler weather layers don't have a direct setTime method
 		// This is a placeholder for future implementation
-		console.log( 'setAnimationTimeValue not implemented for MapTiler weather layers' )
 		setAnimationTime( time )
 	}
 
@@ -128,7 +127,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			const data=stateWeatherAggregator.getStateWeatherData( selectedLayer )
 			setStateWeatherData( data )
 
-			console.log( `🔄 Updated state weather data for ${selectedLayer}:`,data.length,'states' )
 		} catch ( error ) {
 			console.error( 'Error updating state weather data:',error )
 		} finally {
@@ -178,7 +176,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	// Create weather layer based on selected type
 	const createWeatherLayer=useCallback( async ( layerType: string,retryCount: number=0 ) => {
 		if ( !mapRef.current ) {
-			console.log( `⏳ Map not initialized for weather layer creation: ${layerType}` )
 			return null
 		}
 
@@ -190,7 +187,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 		// Check if map style is loaded
 		if ( !mapRef.current.isStyleLoaded() ) {
-			console.log( `⏳ Map style not loaded for weather layer creation: ${layerType}, retry ${retryCount}` )
 
 			// Retry after a short delay if we haven't exceeded max retries
 			if ( retryCount<10 ) {
@@ -229,7 +225,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		}
 
 		try {
-			console.log( `Creating weather layer: ${layerType}` )
 			let layer=null
 
 			// Add a small delay to ensure WebGL context is fully ready
@@ -263,11 +258,9 @@ const MapComponent: React.FC<MapComponentProps>=( {
 						opacity: 0.8,
 						smooth: true
 					} )
-					console.log( `🌧️ Precipitation layer created with opacity 0.8` )
 					// Start animation after layer is created
 					if ( layer&&typeof layer.animateByFactor==='function' ) {
 						layer.animateByFactor( 3600 ) // 1 second = 1 hour
-						console.log( `🌧️ Precipitation layer animation started` )
 					}
 					break
 				case 'wind':
@@ -304,7 +297,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 					} )
 					break
 				default:
-					console.log( `Unknown weather layer type: ${layerType}` )
 					return null
 			}
 
@@ -317,7 +309,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 				if ( layer&&typeof layer.animateByFactor==='function' ) {
 					layer.animateByFactor( 3600 ) // 1 second = 1 hour
 					setIsAnimating( true )
-					console.log( `🌦️ ${layerType} layer animation started (4-day forecast)` )
 				}
 
 				// Add cursor interaction for weather data access
@@ -365,7 +356,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 									[ location.id ]: data
 								} ) )
 							}
-							console.log( `${layerType} data for ${location.name}:`,data )
 						} catch ( error ) {
 							console.warn( `Error getting ${layerType} data for ${location.name}:`,error )
 						}
@@ -431,7 +421,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			// Wait for map style to load before creating weather layers
 			map.on( 'style.load',() => {
-				console.log( '✅ Map style loaded successfully' )
 				setIsMapReady( true )
 				onMapReady?.()
 			} )
@@ -619,7 +608,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 				// Remove layer
 				mapRef.current.removeLayer( weatherLayerRef.current )
-				console.log( `🗑️ Previous weather layer removed` )
 			} catch ( error ) {
 				console.warn( `Error removing previous weather layer:`,error )
 			}
@@ -635,9 +623,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 		// Create the selected weather layer with retry mechanism
 		createWeatherLayer( selectedLayer ).then( layer => {
 			if ( layer ) {
-				console.log( `✅ Weather layer ${selectedLayer} added to map successfully` )
 			} else {
-				console.log( `⏳ Weather layer ${selectedLayer} creation queued (will retry when map is ready)` )
 			}
 		} ).catch( error => {
 			console.error( `❌ Error creating weather layer ${selectedLayer}:`,error )
@@ -647,10 +633,8 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	// Create weather layer when map becomes ready
 	useEffect( () => {
 		if ( isMapReady&&mapRef.current&&selectedLayer ) {
-			console.log( `🔄 Map is ready, creating weather layer: ${selectedLayer}` )
 			createWeatherLayer( selectedLayer ).then( layer => {
 				if ( layer ) {
-					console.log( `✅ Weather layer ${selectedLayer} created successfully after map ready` )
 				}
 			} ).catch( error => {
 				console.error( `❌ Error creating weather layer ${selectedLayer} after map ready:`,error )
@@ -674,7 +658,6 @@ const MapComponent: React.FC<MapComponentProps>=( {
 							...prev,
 							[ location.id ]: data
 						} ) )
-						console.log( `Updated precipitation data for ${location.name}:`,data )
 					} catch ( error ) {
 						console.warn( `Error updating precipitation data for ${location.name}:`,error )
 					}

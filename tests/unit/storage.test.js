@@ -4,11 +4,20 @@
 const { StorageService } = require("../../src/lib/storage");
 
 describe("StorageService Unit Tests", () => {
+  let store;
+
   beforeEach(() => {
-    // Clear localStorage before each test
-    localStorage.clear();
-    // Reset localStorage mock
-    jest.clearAllMocks();
+    store = {};
+    Object.defineProperty(global, "localStorage", {
+      value: {
+        getItem: (key) => store[key] ?? null,
+        setItem: (key, value) => { store[key] = String(value); },
+        removeItem: (key) => { delete store[key]; },
+        clear: () => { store = {}; },
+      },
+      writable: true,
+      configurable: true,
+    });
   });
 
   describe("Location Storage", () => {
@@ -93,7 +102,7 @@ describe("StorageService Unit Tests", () => {
     });
 
     test("should handle invalid JSON in localStorage", () => {
-      localStorage.setItem("weather-locations", "invalid-json");
+      store["codeniweather-locations"] = "invalid-json";
       const locations = StorageService.getLocations();
       expect(locations).toEqual([]);
     });
@@ -101,27 +110,12 @@ describe("StorageService Unit Tests", () => {
 
   describe("Location Management", () => {
     test("should clear all locations", () => {
-      const locations = [
-        {
-          id: "test-location-1",
-          name: "New York",
-          country: "US",
-          state: "NY",
-          lat: 40.7128,
-          lon: -74.006,
-          isCurrentLocation: false,
-        },
-        {
-          id: "test-location-2",
-          name: "London",
-          country: "GB",
-          lat: 51.5074,
-          lon: -0.1278,
-          isCurrentLocation: false,
-        },
-      ];
-
-      locations.forEach((location) => StorageService.addLocation(location));
+      StorageService.addLocation({
+        id: "test-1", name: "NY", country: "US", lat: 40.7, lon: -74.0,
+      });
+      StorageService.addLocation({
+        id: "test-2", name: "London", country: "GB", lat: 51.5, lon: -0.1,
+      });
       StorageService.clearLocations();
 
       const clearedLocations = StorageService.getLocations();
@@ -149,76 +143,66 @@ describe("StorageService Unit Tests", () => {
   });
 
   describe("Error Handling", () => {
-    test("should handle localStorage errors gracefully", () => {
-      // Mock localStorage to throw error
-      const originalSetItem = localStorage.setItem;
-      localStorage.setItem = jest.fn().mockImplementation(() => {
-        throw new Error("Storage quota exceeded");
+    test("should handle localStorage setItem errors gracefully", () => {
+      Object.defineProperty(global, "localStorage", {
+        value: {
+          getItem: () => null,
+          setItem: () => { throw new Error("Storage quota exceeded"); },
+          removeItem: () => {},
+          clear: () => {},
+        },
+        writable: true,
+        configurable: true,
       });
 
-      const mockLocation = {
-        id: "test-location-1",
-        name: "New York",
-        country: "US",
-        state: "NY",
-        lat: 40.7128,
-        lon: -74.006,
-        isCurrentLocation: false,
-      };
-
-      // Should not throw error
-      expect(() => StorageService.addLocation(mockLocation)).not.toThrow();
-
-      // Restore original method
-      localStorage.setItem = originalSetItem;
+      expect(() =>
+        StorageService.addLocation({
+          id: "test-1", name: "NY", country: "US", lat: 40.7, lon: -74.0,
+        })
+      ).not.toThrow();
     });
 
     test("should handle getItem errors gracefully", () => {
-      // Mock localStorage.getItem to throw error
-      const originalGetItem = localStorage.getItem;
-      localStorage.getItem = jest.fn().mockImplementation(() => {
-        throw new Error("Storage access denied");
+      Object.defineProperty(global, "localStorage", {
+        value: {
+          getItem: () => { throw new Error("Storage access denied"); },
+          setItem: () => {},
+          removeItem: () => {},
+          clear: () => {},
+        },
+        writable: true,
+        configurable: true,
       });
 
-      // Should return empty array instead of throwing
       const locations = StorageService.getLocations();
       expect(locations).toEqual([]);
-
-      // Restore original method
-      localStorage.getItem = originalGetItem;
     });
   });
 
   describe("Data Validation", () => {
-    test("should validate location data structure", () => {
-      const invalidLocation = {
+    test("should not add duplicate locations with same coordinates", () => {
+      const location = {
+        id: "test-location-1",
         name: "New York",
-        // Missing required fields
+        country: "US",
+        lat: 40.7128,
+        lon: -74.006,
       };
 
-      StorageService.addLocation(invalidLocation);
+      StorageService.addLocation(location);
+      StorageService.addLocation(location);
       const locations = StorageService.getLocations();
 
-      // Should still add the location (validation happens at component level)
       expect(locations).toHaveLength(1);
     });
 
-    test("should handle invalid location data gracefully", () => {
-      // Test with invalid location data
-      const invalidLocation = {
-        name: "Invalid City",
-        // Missing required fields like lat, lon, id
-      };
-
-      // Should not throw error, but also shouldn't add invalid data
-      expect(() => StorageService.addLocation(invalidLocation)).not.toThrow();
+    test("should handle location data without throwing", () => {
+      expect(() =>
+        StorageService.addLocation({ name: "Invalid City" })
+      ).not.toThrow();
 
       const locations = StorageService.getLocations();
-      // Should still have previous valid locations
       expect(Array.isArray(locations)).toBe(true);
     });
   });
 });
-
-console.log("✅ StorageService Unit Tests - Ready to run");
-console.log("Run with: npm test tests/unit/storage.test.js");

@@ -20,7 +20,6 @@ export class GeocodingAPI {
 
 	private constructor() {
 		this.apiKey=process.env.NEXT_PUBLIC_MAPTILER_API_KEY||'YOUR_MAPTILER_API_KEY'
-		console.log( 'GeocodingAPI initialized with MapTiler API key:',this.apiKey? `${this.apiKey.substring( 0,8 )}...`:'NOT SET' )
 	}
 
 	public static getInstance (): GeocodingAPI {
@@ -43,7 +42,6 @@ export class GeocodingAPI {
 		}
 
 		try {
-			console.log( `Searching for cities using MapTiler: "${query}"` )
 
 			// Use MapTiler geocoding API
 			const response=await geocoding.forward( query,{
@@ -95,7 +93,6 @@ export class GeocodingAPI {
 				}
 			} )
 
-			console.log( `Found ${locations.length} locations using MapTiler for "${query}"` )
 			return locations
 		} catch ( error: any ) {
 			console.error( 'MapTiler geocoding error:',error.response?.data||error.message )
@@ -132,7 +129,6 @@ export class GeocodingAPI {
 		}
 
 		try {
-			console.log( `Reverse geocoding using MapTiler: ${lat}, ${lon}` )
 
 			// Use MapTiler reverse geocoding API
 			const response=await geocoding.reverse( [ lon,lat ],{

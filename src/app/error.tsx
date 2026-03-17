@@ -1,0 +1,35 @@
+'use client'
+
+import { useEffect } from 'react'
+
+export default function GlobalError({
+	error,
+	reset,
+}: {
+	error: Error & { digest?: string }
+	reset: () => void
+}) {
+	useEffect(() => {
+		console.error('Application error:', error)
+	}, [error])
+
+	return (
+		<div className="min-h-[60vh] flex items-center justify-center px-4">
+			<div className="glass-card-strong rounded-3xl p-12 max-w-lg text-center">
+				<div className="text-6xl mb-6">⚠️</div>
+				<h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4">
+					Something went wrong
+				</h2>
+				<p className="text-slate-600 dark:text-slate-400 mb-8">
+					An unexpected error occurred. Please try again.
+				</p>
+				<button
+					onClick={() => reset()}
+					className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors duration-200"
+				>
+					Try again
+				</button>
+			</div>
+		</div>
+	)
+}

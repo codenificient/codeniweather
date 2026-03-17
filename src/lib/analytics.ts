@@ -23,7 +23,6 @@ class CodeniWeatherAnalytics {
 				debug: this.config.debug||false,
 			} )
 			this.isInitialized=true
-			console.log( '✅ Analytics initialized successfully' )
 		} catch ( error ) {
 			console.error( '⚠️ Failed to initialize analytics:',error )
 		}
@@ -292,7 +291,6 @@ class CodeniWeatherAnalytics {
 	// Test analytics connection
 	async testConnection (): Promise<boolean> {
 		if ( !this.isInitialized ) {
-			console.log( '❌ Cannot test - Analytics not initialized' )
 			return false
 		}
 
@@ -302,7 +300,6 @@ class CodeniWeatherAnalytics {
 				test: true,
 				timestamp: new Date().toISOString()
 			} )
-			console.log( '✅ Analytics connection test successful' )
 			return true
 		} catch ( error ) {
 			console.error( '❌ Analytics connection test failed:',error )
