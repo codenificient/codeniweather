@@ -1,5 +1,7 @@
 # CodeniWeather 🌤️
 
+[![CodeniWeather Preview](https://api.microlink.io/?url=https://codeniweather.vercel.app&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1200&viewport.height=630)](https://codeniweather.vercel.app)
+
 A modern, responsive weather application built with Next.js 14, featuring real-time weather data, interactive weather maps, 7-day forecasts, and a beautiful glass-morphism UI with dark/light theme support.
 
 ## 🚀 Quick Start
