@@ -24,6 +24,8 @@ export interface WeatherData {
 	wind: {
 		speed: number
 		deg: number
+		/** Only present when the station actually reported a gust. */
+		gust?: number
 	}
 	visibility: number
 	clouds: {

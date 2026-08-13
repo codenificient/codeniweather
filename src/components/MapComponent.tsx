@@ -21,6 +21,12 @@ interface MapComponentProps {
 	webglSupported: boolean
 	onMapReady?: () => void
 	onZoomToLocation?: ( lat: number,lon: number ) => void
+	/**
+	 * Suppress the map's own chrome — legend, animation bar, zoom controls and
+	 * state badges — leaving just the tiles and markers. The 1b screens draw
+	 * their own controls in the design's idiom, so they opt into this.
+	 */
+	bare?: boolean
 }
 
 // Helper function to convert wind direction degrees to compass direction
@@ -39,7 +45,8 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	currentLocation,
 	webglSupported,
 	onMapReady,
-	onZoomToLocation
+	onZoomToLocation,
+	bare=false
 } ) => {
 	const { theme }=useTheme()
 	const mapContainer=useRef<HTMLDivElement>( null )
@@ -402,7 +409,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			} )
 
 			// Add navigation control only if it hasn't been added yet
-			if ( !navigationControlRef.current ) {
+			if ( !navigationControlRef.current&&!bare ) {
 				const navControl=new NavigationControl()
 				map.addControl( navControl,'top-right' )
 				navigationControlRef.current=navControl
@@ -749,7 +756,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* Time Animation Control Bar */}
-			{isAnimating&&weatherLayerRef.current&&(
+			{isAnimating&&weatherLayerRef.current&&!bare&&(
 				<div className="absolute bottom-16 left-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10">
 					<div className="flex items-center gap-4 mb-3">
 						<div className="flex items-center gap-2">
@@ -1010,7 +1017,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* Weather Layer Legend/Scale */}
-			{selectedLayer&&(
+			{selectedLayer&&!bare&&(
 				<div className="absolute bottom-[10rem] left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 z-10 max-w-48">
 					<div className="flex items-center gap-1.5 mb-2">
 						<span className="text-sm">
@@ -1144,7 +1151,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* State Weather Badges */}
-			{stateWeatherData.map( ( stateData ) => {
+			{!bare&&stateWeatherData.map( ( stateData ) => {
 				const state=US_STATES.find( s => s.id===stateData.stateId )
 				if ( !state||!isStateVisible( stateData ) ) return null
 
@@ -1162,7 +1169,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			} )}
 
 			{/* State Weather Data Loading Indicator */}
-			{isUpdatingStateData&&(
+			{isUpdatingStateData&&!bare&&(
 				<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
 					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg px-4 py-2 flex items-center gap-2">
 						<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>

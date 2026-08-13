@@ -60,12 +60,9 @@ export default function RootLayout ( {
 				<link rel="apple-touch-icon" href="/favicon.svg" />
 			</head>
 			<body className={`${geist.className} font-sans`}>
-				{/* Animated background gradient orbs */}
-				<div className="gradient-orb-1"></div>
-				<div className="gradient-orb-2"></div>
-				<div className="gradient-orb-3"></div>
-				<div className="gradient-orb-4"></div>
-
+				{/* The 1b design is deliberately flat — the decorative gradient orbs
+				    that used to sit behind the app have been removed rather than
+				    restyled. */}
 				<ThemeProvider>
 					<WeatherProvider>
 						<ClientLayout>
