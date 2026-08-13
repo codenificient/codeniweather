@@ -1,146 +1,148 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useWeather } from '@/contexts/WeatherContext'
-import { motion } from 'framer-motion'
-// Icons replaced with emojis
+import { cityTag,readout } from '@/lib/instrument'
 import { usePathname,useRouter } from 'next/navigation'
-import React from 'react'
+import React,{ useEffect,useState } from 'react'
 
 interface SidebarProps {
 	isOpen: boolean
 	onToggle: () => void
 }
 
+const NAV=[
+	{ label: 'Now',path: '/' },
+	{ label: 'Cities',path: '/cities' },
+	{ label: 'Radar map',path: '/map' },
+	{ label: 'Settings',path: '/settings' },
+]
+
+/**
+ * The 1b navigation rail. Saved cities are listed as three-letter tags with a
+ * bare temperature, which is what makes the rail read as an instrument panel
+ * rather than a nav menu.
+ */
 const Sidebar: React.FC<SidebarProps>=( { isOpen,onToggle } ) => {
 	const router=useRouter()
 	const pathname=usePathname()
-	const { refreshAllWeather,loading }=useWeather()
-	const { theme,toggleTheme }=useTheme()
+	const { locations,weatherData,currentLocation,units }=useWeather()
+	const { theme,setTheme }=useTheme()
 
-	const navigationItems=[
-		{ id: 'weather',label: 'Weather',icon: '🌤️',path: '/' },
-		{ id: 'cities',label: 'Cities',icon: '📍',path: '/cities' },
-		{ id: 'map',label: 'Map',icon: '🗺️',path: '/map' },
-		{ id: 'settings',label: 'Settings',icon: '⚙️',path: '/settings' },
-	]
+	// The sync clock is rendered only after mount: it is derived from the
+	// browser's locale and timezone, so rendering it during SSR would produce a
+	// hydration mismatch.
+	const [ syncedAt,setSyncedAt ]=useState<string|null>( null )
+	const latestDt=locations
+		.map( loc => weatherData[ loc.id ]?.dt )
+		.filter( ( dt ): dt is number => typeof dt==='number' )
+		.sort( ( a,b ) => b-a )[ 0 ]
 
-	const handleNavigation=( path: string ) => {
+	useEffect( () => {
+		if ( !latestDt ) {
+			setSyncedAt( null )
+			return
+		}
+		setSyncedAt( new Date( latestDt*1000 ).toLocaleTimeString( 'en-GB',{ hour12: false } ) )
+	},[ latestDt ] )
+
+	const go=( path: string ) => {
 		router.push( path )
-	}
-
-
-	const handleRefresh=async () => {
-		await refreshAllWeather()
+		onToggle()
 	}
 
 	return (
 		<>
-			{/* Mobile Overlay */}
 			{isOpen&&(
-				<motion.div
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
+				<div
 					onClick={onToggle}
 					className="fixed inset-0 bg-black/50 z-40 lg:hidden"
 				/>
 			)}
 
-			{/* Sidebar - Super Thin with Rounded Corners */}
-			<motion.div
-				initial={{ x: -80 }}
-				animate={{ x: isOpen? 0:-80 }}
-				transition={{ type: 'spring',damping: 25,stiffness: 200 }}
+			<aside
 				className={`
-          fixed top-0 left-0 h-screen w-20 glass-card-strong z-50
-          flex flex-col shadow-xl rounded-r-2xl
-          ${isOpen? 'translate-x-0':'-translate-x-full'}
-          lg:translate-x-0 lg:static lg:z-auto lg:h-full
-        `}
+					fixed lg:static top-0 left-0 z-50 h-full w-[208px] flex-shrink-0
+					bg-bg border-r border-line
+					px-[18px] py-[22px] flex flex-col gap-[26px]
+					transition-transform lg:translate-x-0
+					${isOpen? 'translate-x-0':'-translate-x-full'}
+				`}
 			>
-				{/* Header - Vertical */}
-				<div className="p-3 border-b border-white/20 dark:border-white/10">
-					<div className="flex flex-col items-center space-y-2">
-						<div className="p-2 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 rounded-xl border border-slate-200 dark:border-slate-600">
-							<img
-								src="/favicon.svg"
-								alt="CodeniWeather"
-								className="w-6 h-6"
-							/>
-						</div>
-						<div className="text-center">
-							<h1 className="text-xs font-bold text-slate-800 dark:text-slate-300 leading-tight">Weather</h1>
-						</div>
-					</div>
+				<div className="flex items-center gap-2.5">
+					<span className="w-2.5 h-2.5 bg-accent flex-shrink-0" />
+					<span className="font-mono text-xs tracking-[.14em]">CODENIWEATHER</span>
 				</div>
 
-				{/* Quick Actions - Vertical */}
-				<div className="p-2 border-b border-white/20 dark:border-white/10">
-					<div className="space-y-2">
-						<button
-							onClick={handleRefresh}
-							disabled={loading}
-							className="w-full flex flex-col items-center space-y-1 px-2 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50"
-							title="Refresh All"
-						>
-							<div className="p-2 bg-blue-500/20 rounded-lg">
-								<span className={`text-lg text-blue-600 ${loading? 'animate-spin':''}`}>🔄</span>
-							</div>
-							<span className="text-xs font-medium text-center text-slate-700 dark:text-slate-300">Refresh</span>
-						</button>
-
-						{/* Theme Switcher */}
-						<Button
-							onClick={toggleTheme}
-							variant="ghost"
-							size="sm"
-							className="w-full flex flex-col items-center space-y-1 px-2 py-3 h-auto"
-							title={`Switch to ${theme==='light'? 'dark':'light'} theme`}
-						>
-							<div className="p-2 bg-slate-500/20 rounded-lg">
-								<span className="text-lg text-slate-600 dark:text-slate-300">
-									{theme==='light'? '🌙':'☀️'}
-								</span>
-							</div>
-							<span className="text-xs font-medium text-center text-slate-700 dark:text-slate-300">
-								{theme==='light'? 'Dark':'Light'}
-							</span>
-						</Button>
-					</div>
-				</div>
-
-				{/* Navigation - Vertical */}
-				<nav className="flex-1 p-2">
-					<div className="space-y-1">
-						{navigationItems.map( ( item ) => {
-							const isActive=pathname===item.path
-
-							return (
-								<button
-									key={item.id}
-									onClick={() => handleNavigation( item.path )}
-									className={`
-                    w-full flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200
-                    ${isActive
-											? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg'
-											:'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
-										}
-                  `}
-									title={item.label}
-								>
-									<div className={`p-2 rounded-lg ${isActive? 'bg-white/20':'bg-slate-100 dark:bg-white/10'}`}>
-										<span className={`text-lg ${isActive? 'text-white':'text-slate-600 dark:text-slate-400'}`}>{item.icon}</span>
-									</div>
-									<span className="text-xs font-medium text-center leading-tight text-slate-700 dark:text-slate-300">{item.label}</span>
-								</button>
-							)
-						} )}
-					</div>
+				<nav className="flex flex-col gap-0.5 text-sm">
+					{NAV.map( item => {
+						const active=pathname===item.path
+						return (
+							<button
+								key={item.path}
+								onClick={() => go( item.path )}
+								className={`
+									text-left px-[11px] py-[9px] border-l-2 transition-colors
+									${active
+										? 'bg-panel2 border-accent text-ink'
+										:'border-transparent text-mute hover:text-ink'}
+								`}
+							>
+								{item.label}
+							</button>
+						)
+					} )}
 				</nav>
 
-			</motion.div>
+				<div className="border-t border-line pt-[18px] min-h-0 flex flex-col">
+					<div className="font-mono text-[10px] tracking-[.14em] text-mute2 mb-3">
+						SAVED / {locations.length}
+					</div>
+					<div className="flex flex-col gap-2.5 font-mono text-[13px] overflow-y-auto">
+						{locations.map( loc => {
+							const temp=weatherData[ loc.id ]?.main.temp
+							const active=currentLocation?.id===loc.id
+							return (
+								<div
+									key={loc.id}
+									className={`flex justify-between ${active? 'text-ink':'text-mute'}`}
+								>
+									<span>{cityTag( loc.name )}</span>
+									<span>{readout( temp )}</span>
+								</div>
+							)
+						} )}
+						{locations.length===0&&(
+							<div className="text-mute2">NONE</div>
+						)}
+					</div>
+				</div>
+
+				<div className="mt-auto flex flex-col gap-3">
+					<div className="flex gap-px font-mono text-[10px] tracking-[.1em]">
+						<button
+							onClick={() => setTheme( 'dark' )}
+							className="flex-1 text-center py-[7px] border border-line bg-[var(--tgd-bg)] text-[var(--tgd-ink)]"
+						>
+							DARK
+						</button>
+						<button
+							onClick={() => setTheme( 'light' )}
+							className="flex-1 text-center py-[7px] border border-line bg-[var(--tgl-bg)] text-[var(--tgl-ink)]"
+						>
+							LIGHT
+						</button>
+					</div>
+					<div className="font-mono text-[10px] leading-[1.7] text-mute2">
+						OPENWEATHER<br />
+						MAPTILER WEATHER v3<br />
+						{syncedAt? `SYNC ${syncedAt}`:'SYNC —'}
+					</div>
+					<div className="font-mono text-[10px] text-mute2">
+						UNITS {units==='imperial'? 'F':'C'}
+					</div>
+				</div>
+			</aside>
 		</>
 	)
 }

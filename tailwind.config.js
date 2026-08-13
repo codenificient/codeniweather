@@ -8,7 +8,22 @@ module.exports = {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: [ 'var(--font-geist)','ui-sans-serif','system-ui','sans-serif' ],
+  			mono: [ 'var(--font-mono)','ui-monospace','SFMono-Regular','monospace' ],
+  		},
+  		// 1b instrument-panel tokens, surfaced as Tailwind colours so screens can
+  		// use bg-panel / text-ink / border-line instead of inline var(--…).
   		colors: {
+  			bg: 'var(--bg)',
+  			panel: 'var(--panel)',
+  			panel2: 'var(--panel2)',
+  			line: 'var(--line)',
+  			line2: 'var(--line2)',
+  			ink: 'var(--ink)',
+  			ink2: 'var(--ink2)',
+  			mute: 'var(--mute)',
+  			mute2: 'var(--mute2)',
   			primary: {
   				'50': '#eff6ff',
   				'100': '#dbeafe',
@@ -41,9 +56,15 @@ module.exports = {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'
   			},
+  			// Single source of truth for the accent. This key previously read
+  			// `hsl(var(--accent))`; the 1b tokens define --accent as a hex, and
+  			// hsl(#bd4526) is invalid CSS, so bg-accent silently computed to
+  			// transparent. Keep this as the only `accent` entry — a second one
+  			// earlier in the object is dropped at parse time, not merged.
   			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  				DEFAULT: 'var(--accent)',
+  				ink: 'var(--accent-ink)',
+  				foreground: 'var(--accent-ink)'
   			},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',

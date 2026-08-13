@@ -617,3 +617,41 @@ select:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * 1b "instrument panel" design tokens
+ *
+ * Ported verbatim from the claude.ai design project (CodeniWeather 1b.dc.html).
+ * Light and dark deliberately share one token set — every screen reads the same
+ * names, so a screen is converted by swapping its colours to var(--…) rather
+ * than by branching on theme.
+ *
+ * Added additively: the legacy palette above still drives any screen not yet
+ * converted, so the branch renders correctly at every step of the port.
+ * ------------------------------------------------------------------------ */
+
+[data-theme="dark"] {
+	--bg: #0c0d0f; --panel: #14161a; --panel2: #191c21;
+	--line: #22252a; --line2: #1c1f24;
+	--ink: #e8e9ea; --ink2: #b9bdc3; --mute: #8b9098; --mute2: #8c9299;
+	--accent: #d9603f; --accent-ink: #140b08;
+	--inv-bg: #e8e9ea; --inv-ink: #0c0d0f;
+	--alert-bg: #2a1710; --alert-line: #45241a; --alert-ink: #f0b39c;
+	--bar: #3b4048; --map: #101317; --stripe: rgba(255,255,255,.07);
+	--tgd-bg: #e8e9ea; --tgd-ink: #0c0d0f; --tgl-bg: transparent; --tgl-ink: #8b9098;
+	--knob-x: 22px; --track: #d9603f;
+	--shadow: 0 24px 60px rgba(8,9,11,.42);
+}
+
+[data-theme="light"] {
+	--bg: #f7f7f5; --panel: #ffffff; --panel2: #f0f0ec;
+	--line: #e2e2dd; --line2: #ecece7;
+	--ink: #16181a; --ink2: #3f4247; --mute: #64686e; --mute2: #63666c;
+	--accent: #bd4526; --accent-ink: #fff5f1;
+	--inv-bg: #16181a; --inv-ink: #f7f7f5;
+	--alert-bg: #fbeee4; --alert-line: #e6cbb2; --alert-ink: #7c4322;
+	--bar: #c6c6c0; --map: #eeeeea; --stripe: rgba(0,0,0,.06);
+	--tgd-bg: transparent; --tgd-ink: #64686e; --tgl-bg: #16181a; --tgl-ink: #f7f7f5;
+	--knob-x: 2px; --track: #c6c6c0;
+	--shadow: 0 24px 60px rgba(30,32,36,.16);
+}

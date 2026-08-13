@@ -21,6 +21,12 @@ interface MapComponentProps {
 	webglSupported: boolean
 	onMapReady?: () => void
 	onZoomToLocation?: ( lat: number,lon: number ) => void
+	/**
+	 * Suppress the map's own chrome — legend, animation bar, zoom controls and
+	 * state badges — leaving just the tiles and markers. The 1b screens draw
+	 * their own controls in the design's idiom, so they opt into this.
+	 */
+	bare?: boolean
 }
 
 // Helper function to convert wind direction degrees to compass direction
@@ -39,7 +45,8 @@ const MapComponent: React.FC<MapComponentProps>=( {
 	currentLocation,
 	webglSupported,
 	onMapReady,
-	onZoomToLocation
+	onZoomToLocation,
+	bare=false
 } ) => {
 	const { theme }=useTheme()
 	const mapContainer=useRef<HTMLDivElement>( null )
@@ -187,14 +194,19 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 		// Check if map style is loaded
 		if ( !mapRef.current.isStyleLoaded() ) {
-
-			// Retry after a short delay if we haven't exceeded max retries
+			// Wait for the map to tell us it is ready rather than polling on a
+			// fixed budget. The old version gave up after 10 × 500ms, and on a cold
+			// cache the style routinely takes longer than that — after which the
+			// layer was never created at all and the map stayed blank until the
+			// user happened to switch layers. `once('idle')` fires when the style
+			// has loaded and the first frame is drawn. The retry counter is kept
+			// only as a guard against re-arming forever.
 			if ( retryCount<10 ) {
-				setTimeout( async () => {
-					await createWeatherLayer( layerType,retryCount+1 )
-				},500 )
+				mapRef.current.once( 'idle',() => {
+					void createWeatherLayer( layerType,retryCount+1 )
+				} )
 			} else {
-				console.error( `❌ Max retries exceeded for weather layer creation: ${layerType}` )
+				console.error( `❌ Gave up creating weather layer: ${layerType}` )
 			}
 			return null
 		}
@@ -395,14 +407,21 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			// Create map with initial center and zoom
 			const map=new Map( {
 				container: mapContainer.current,
-				style: 'streets-v2',
+				// A full style.json URL, not the bare id `'streets-v2'`: the SDK
+				// rejects the bare id ("Invalid style") and the weather layer then
+				// never attaches. Importing MapStyle from @maptiler/client is not a
+				// fix either — that resolves to a second copy of the library whose
+				// variant instances the SDK does not recognise, so the style silently
+				// never loads. The URL form is unambiguous. Keyed to the theme so the
+				// basemap matches the surrounding tokens.
+				style: `https://api.maptiler.com/maps/streets-v2-${theme==='dark'? 'dark':'light'}/style.json?key=${apiKey}`,
 				center: center,
 				zoom: zoom,
 				...( apiKey&&apiKey!=='YOUR_MAPTILER_API_KEY'&&{ apiKey } )
 			} )
 
 			// Add navigation control only if it hasn't been added yet
-			if ( !navigationControlRef.current ) {
+			if ( !navigationControlRef.current&&!bare ) {
 				const navControl=new NavigationControl()
 				map.addControl( navControl,'top-right' )
 				navigationControlRef.current=navControl
@@ -421,6 +440,12 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			// Wait for map style to load before creating weather layers
 			map.on( 'style.load',() => {
+				// The map is constructed before the surrounding panel has settled its
+				// height, so MapLibre latches onto a stale viewport and never paints —
+				// the canvas stays blank until some later interaction forces a resize.
+				// Ask for one explicitly once the style is up. This is why the map only
+				// appeared after clicking a layer chip.
+				map.resize()
 				setIsMapReady( true )
 				onMapReady?.()
 			} )
@@ -518,7 +543,15 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			}
 			markersRef.current=[]
 		}
-	},[ apiKey,onMapReady,center,zoom,locations,currentLocation,getWeatherIconForCondition ] )
+		// Only rebuild the map when something structural changes. `center`, `zoom`,
+		// `locations`, `currentLocation` and `getWeatherIconForCondition` were in
+		// this list, and several of them get a fresh identity on every render — so
+		// the map was torn down and reconstructed continuously, never finishing its
+		// style load ("Style is not done loading") and eventually losing the WebGL
+		// context, which is what left the panel blank. center/zoom are initial view
+		// values only; markers are maintained by the effect below.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	},[ apiKey,theme ] )
 
 	// Update markers when locations change
 	useEffect( () => {
@@ -749,7 +782,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* Time Animation Control Bar */}
-			{isAnimating&&weatherLayerRef.current&&(
+			{isAnimating&&weatherLayerRef.current&&!bare&&(
 				<div className="absolute bottom-16 left-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-4 z-10">
 					<div className="flex items-center gap-4 mb-3">
 						<div className="flex items-center gap-2">
@@ -1010,7 +1043,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* Weather Layer Legend/Scale */}
-			{selectedLayer&&(
+			{selectedLayer&&!bare&&(
 				<div className="absolute bottom-[10rem] left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 z-10 max-w-48">
 					<div className="flex items-center gap-1.5 mb-2">
 						<span className="text-sm">
@@ -1144,7 +1177,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			)}
 
 			{/* State Weather Badges */}
-			{stateWeatherData.map( ( stateData ) => {
+			{!bare&&stateWeatherData.map( ( stateData ) => {
 				const state=US_STATES.find( s => s.id===stateData.stateId )
 				if ( !state||!isStateVisible( stateData ) ) return null
 
@@ -1162,7 +1195,7 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			} )}
 
 			{/* State Weather Data Loading Indicator */}
-			{isUpdatingStateData&&(
+			{isUpdatingStateData&&!bare&&(
 				<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
 					<div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg px-4 py-2 flex items-center gap-2">
 						<div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>

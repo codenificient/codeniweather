@@ -1,9 +1,8 @@
 'use client'
 
 import { analytics } from '@/lib/analytics'
+import { cityTag,condCode } from '@/lib/instrument'
 import { WeatherData } from '@/types/weather'
-import { AnimatePresence,motion } from 'framer-motion'
-// Icons replaced with emojis
 import React,{ useEffect,useRef,useState } from 'react'
 
 interface LocationSearchProps {
@@ -112,9 +111,9 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 	}
 
 	return (
-		<div className="relative w-full max-w-md">
-			<div className="relative">
-				<span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400 text-lg">🔍</span>
+		<div className="relative w-full max-w-[460px]">
+			<div className="flex items-center gap-3 bg-panel border border-line px-[13px] py-2.5">
+				<span className="font-mono text-xs text-accent select-none">/</span>
 				<input
 					ref={inputRef}
 					type="text"
@@ -122,61 +121,43 @@ const LocationSearch: React.FC<LocationSearchProps>=( {
 					onChange={( e ) => setQuery( e.target.value )}
 					onFocus={handleInputFocus}
 					onBlur={handleInputBlur}
-					placeholder="Search for a city (min 3 characters)..."
-					className="input-field w-full pl-10 pr-4 py-3"
+					placeholder="Find a city — MapTiler geocoding"
+					className="flex-1 bg-transparent border-0 p-0 text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-0 disabled:opacity-50"
 					disabled={loading}
 				/>
 				{( searchLoading||loading )&&(
-					<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-						<div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-300 border-t-transparent"></div>
-					</div>
+					<span className="font-mono text-[10px] tracking-[.1em] text-mute">···</span>
 				)}
 			</div>
 
-			<AnimatePresence>
-				{showResults&&results.length>0&&(
-					<motion.div
-						initial={{ opacity: 0,y: -10 }}
-						animate={{ opacity: 1,y: 0 }}
-						exit={{ opacity: 0,y: -10 }}
-						className="absolute top-full left-0 right-0 mt-2 glass-card-strong rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto"
-					>
-						{results.map( ( weather,index ) => (
-							<motion.button
-								key={`${weather.id}-${index}`}
-								initial={{ opacity: 0,x: -20 }}
-								animate={{ opacity: 1,x: 0 }}
-								transition={{ delay: index*0.05 }}
-								onClick={() => handleLocationSelect( weather )}
-								className="w-full flex items-center space-x-3 px-4 py-3 hover:glass-card transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl text-slate-800 dark:text-slate-200"
-							>
-								<span className="text-blue-600 flex-shrink-0 text-lg">📍</span>
-								<div className="flex-1 text-left">
-									<div className="font-medium text-slate-800 dark:text-slate-200">
-										{weather.name}{weather.state&&`, ${weather.state}`}, {weather.sys.country}
-									</div>
-									<div className="text-slate-600 dark:text-slate-400 text-sm">
-										{weather.weather[ 0 ].description}
-									</div>
-								</div>
-								<span className="text-blue-600 flex-shrink-0 text-lg">➕</span>
-							</motion.button>
-						) )}
-					</motion.div>
-				)}
-			</AnimatePresence>
+			{showResults&&results.length>0&&(
+				<div className="absolute top-full left-0 right-0 mt-px bg-panel border border-line shadow-[var(--shadow)] z-50 max-h-72 overflow-y-auto">
+					{results.map( ( weather,index ) => (
+						<button
+							key={`${weather.id}-${index}`}
+							onClick={() => handleLocationSelect( weather )}
+							className="w-full flex items-center gap-3 px-[13px] py-2.5 text-left border-b border-line2 last:border-b-0 hover:bg-panel2 transition-colors"
+						>
+							<span className="font-mono text-[11px] text-mute2 w-9 flex-shrink-0">
+								{cityTag( weather.name )}
+							</span>
+							<span className="flex-1 text-sm text-ink">
+								{weather.name}{weather.state&&`, ${weather.state}`}, {weather.sys.country}
+							</span>
+							<span className="font-mono text-[11px] text-mute flex-shrink-0">
+								{condCode( weather.weather[ 0 ] )}
+							</span>
+						</button>
+					) )}
+				</div>
+			)}
 
 			{showResults&&results.length===0&&query.trim().length>=3&&!searchLoading&&(
-				<motion.div
-					initial={{ opacity: 0,y: -10 }}
-					animate={{ opacity: 1,y: 0 }}
-					exit={{ opacity: 0,y: -10 }}
-					className="absolute top-full left-0 right-0 mt-2 glass-card-strong rounded-xl shadow-xl z-50 p-4"
-				>
-					<div className="text-center text-slate-700 dark:text-slate-300">
-						No cities found for &quot;{query}&quot;
-					</div>
-				</motion.div>
+				<div className="absolute top-full left-0 right-0 mt-px bg-panel border border-line shadow-[var(--shadow)] z-50 px-[13px] py-2.5">
+					<span className="font-mono text-[11px] tracking-[.08em] text-mute">
+						NO MATCH — {query.trim().toUpperCase()}
+					</span>
+				</div>
 			)}
 		</div>
 	)

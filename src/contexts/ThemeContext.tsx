@@ -46,6 +46,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps>=( { children } ) => {
 		if ( mounted ) {
 			document.documentElement.classList.remove( 'light','dark' )
 			document.documentElement.classList.add( theme )
+			// The 1b design keys its token set off [data-theme]; the class is kept
+			// so the existing Tailwind dark: variants keep working while screens
+			// are converted one at a time.
+			document.documentElement.setAttribute( 'data-theme',theme )
 			localStorage.setItem( 'theme',theme )
 		}
 	},[ theme,mounted ] )
