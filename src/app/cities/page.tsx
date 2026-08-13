@@ -1,175 +1,202 @@
 'use client'
 
-import LoadingSpinner from '@/components/LoadingSpinner'
+import LocationSearch from '@/components/LocationSearch'
 import WeatherCard from '@/components/WeatherCard'
 import { useWeather } from '@/contexts/WeatherContext'
 import { analytics } from '@/lib/analytics'
-import { AnimatePresence,motion } from 'framer-motion'
-// Icons replaced with emojis
-import { useEffect } from 'react'
+import { GeolocationService } from '@/lib/geolocation'
+import { cityTag,readout } from '@/lib/instrument'
+import { Location,WeatherData } from '@/types/weather'
+import { useEffect,useState } from 'react'
 
 export default function CitiesPage () {
-	const { locations,weatherData,loading,removeLocation,units,setCurrentLocation,currentLocation }=useWeather()
+	const {
+		locations,
+		weatherData,
+		loading,
+		removeLocation,
+		units,
+		setCurrentLocation,
+		currentLocation,
+		addLocation,
+		searchCities,
+		refreshAllWeather,
+	}=useWeather()
 
-	const allLocations=locations
+	const [ locating,setLocating ]=useState( false )
+	const [ locateError,setLocateError ]=useState<string|null>( null )
 
-	// Track page view
 	useEffect( () => {
 		analytics.pageView( '/cities',{
 			title: 'cities-list',
 			referrer: 'cities-list',
 			userId: "cmfombacy0001l204jdhysr04"
 		} )
-	},[ allLocations.length,currentLocation ] )
+	},[ locations.length,currentLocation ] )
 
-	if ( loading&&allLocations.length===0 ) {
-		return (
-			<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">
-				<div className="flex justify-center items-center py-20 h-full">
-					<LoadingSpinner size="lg" text="Loading cities..." />
-				</div>
-			</div>
-		)
+	const handleLocationSelect=async ( weather: WeatherData ) => {
+		const location: Location={
+			id: `location-${Date.now()}`,
+			name: weather.name,
+			country: weather.sys.country,
+			state: weather.state,
+			lat: weather.coord.lat,
+			lon: weather.coord.lon,
+		}
+		try {
+			await addLocation( location )
+			analytics.track( 'location_added',{ name: location.name,country: location.country } )
+		} catch ( err ) {
+			console.error( 'Error adding location:',err )
+		}
 	}
 
+	const handleUseMyLocation=async () => {
+		setLocating( true )
+		setLocateError( null )
+		try {
+			const location=await GeolocationService.getCurrentPosition()
+			await addLocation( location )
+			analytics.track( 'location_added',{ name: location.name,source: 'geolocation' } )
+		} catch ( err ) {
+			setLocateError( err instanceof Error? err.message:'Could not determine your location' )
+		} finally {
+			setLocating( false )
+		}
+	}
+
+	// The ranked strip is sorted hottest-first and each bar is scaled against the
+	// warmest city in view, so the comparison stays readable whatever the range.
+	const ranked=locations
+		.map( loc => ( { loc,temp: weatherData[ loc.id ]?.main.temp } ) )
+		.filter( ( r ): r is { loc: Location; temp: number } => typeof r.temp==='number' )
+		.sort( ( a,b ) => b.temp-a.temp )
+	const hottest=ranked.length>0? Math.max( ...ranked.map( r => r.temp ),1 ):1
+	const coldest=ranked.length>0? Math.min( ...ranked.map( r => r.temp ) ):0
+	const span=Math.max( hottest-coldest,1 )
+
 	return (
-		<div className="w-full px-4 sm:px-6 lg:px-8 py-8 min-h-full">
-			<motion.div
-				initial={{ opacity: 0,y: 20 }}
-				animate={{ opacity: 1,y: 0 }}
-				className="space-y-8 h-full"
-			>
-				{/* Header */}
-				<div className="text-center">
-					<h1 className="text-4xl font-bold gradient-text-primary mb-4">
-						Your Cities
-					</h1>
-					<p className="text-slate-600 text-lg">
-						Manage your saved weather locations
-					</p>
+		<div className="flex flex-col min-h-full">
+			<div className="flex flex-wrap items-center gap-4 px-[26px] py-4 border-b border-line">
+				<div className="text-[17px] font-medium">Cities</div>
+				<div className="font-mono text-[11px] text-mute2">
+					{locations.length} SAVED
+					{currentLocation? ` · CURRENT ${cityTag( currentLocation.name )}`:''}
+				</div>
+				<div className="ml-auto flex flex-wrap items-center gap-3.5">
+					<div className="w-[300px]">
+						<LocationSearch
+							onLocationSelect={handleLocationSelect}
+							onSearch={searchCities}
+							loading={loading}
+						/>
+					</div>
+					<button
+						onClick={() => refreshAllWeather()}
+						disabled={loading}
+						className="font-mono text-[11px] px-[13px] py-2 bg-[var(--inv-bg)] text-[var(--inv-ink)] disabled:opacity-50 transition-opacity"
+					>
+						{loading? 'REFRESHING…':'REFRESH ALL'}
+					</button>
+				</div>
+			</div>
+
+			{locations.length>0? (
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border-b border-line">
+					{locations.map( location => {
+						const weather=weatherData[ location.id ]
+						const isCurrent=currentLocation?.id===location.id
+
+						if ( !weather ) {
+							return (
+								<div
+									key={location.id}
+									className={`bg-bg px-6 py-[22px] border-l-2 ${isCurrent? 'border-accent':'border-transparent'}`}
+								>
+									<div className="font-mono text-[10px] tracking-[.14em] text-mute2">
+										{cityTag( location.name )}
+									</div>
+									<div className="text-[19px] font-medium mt-[7px]">{location.name}</div>
+									<div className="text-[13px] text-mute mt-[3px]">
+										{[ location.state,location.country ].filter( Boolean ).join( ', ' )}
+									</div>
+									<div className="font-mono text-[11px] text-mute2 mt-5">ACQUIRING…</div>
+								</div>
+							)
+						}
+
+						return (
+							<WeatherCard
+								key={location.id}
+								weather={weather}
+								location={location}
+								isCurrentLocation={isCurrent}
+								onRemove={() => removeLocation( location.id )}
+								onSetCurrent={() => setCurrentLocation( location )}
+								units={units}
+							/>
+						)
+					} )}
+				</div>
+			):(
+				<div className="px-[26px] py-16 font-mono text-[13px] text-mute">
+					NO CITIES SAVED — ADD ONE ABOVE OR USE YOUR LOCATION
+				</div>
+			)}
+
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-[26px] px-[26px] pt-5 pb-[26px]">
+				<div>
+					<div className="font-mono text-[11px] tracking-[.14em] text-mute2 mb-3">
+						ADD A CITY
+					</div>
+					<div className="border border-dashed border-line p-5 flex flex-wrap items-center justify-between gap-3">
+						<span className="text-sm text-mute">
+							Search by name above, or add wherever you are now
+						</span>
+						<button
+							onClick={handleUseMyLocation}
+							disabled={locating}
+							className="font-mono text-[11px] text-accent hover:underline disabled:opacity-50"
+						>
+							{locating? 'LOCATING…':'USE MY LOCATION'}
+						</button>
+					</div>
+					{locateError&&(
+						<div className="font-mono text-[11px] text-[var(--alert-ink)] bg-[var(--alert-bg)] border border-[var(--alert-line)] px-3 py-2 mt-2">
+							{locateError.toUpperCase()}
+						</div>
+					)}
 				</div>
 
-				{/* Cities Grid */}
-				{allLocations.length>0? (
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-						<AnimatePresence>
-							{allLocations.map( ( location,index ) => {
-								const weather=weatherData[ location.id ]
-								const isCurrentLocation=currentLocation?.id===location.id
-
-
-								return weather? (
-									<motion.div
-										key={location.id}
-										initial={{ opacity: 0,y: 20 }}
-										animate={{ opacity: 1,y: 0 }}
-										exit={{ opacity: 0,y: -20 }}
-										transition={{ delay: index*0.1 }}
-										className="animate-fade-in-scale"
-									>
-										<WeatherCard
-											weather={weather}
-											location={location}
-											isCurrentLocation={isCurrentLocation}
-											onRemove={() => removeLocation( location.id )}
-											onSetCurrent={() => setCurrentLocation( location )}
-											units={units}
-										/>
-									</motion.div>
-								):(
-									// Show loading state for locations without weather data
-									<motion.div
-										key={location.id}
-										initial={{ opacity: 0,y: 20 }}
-										animate={{ opacity: 1,y: 0 }}
-										transition={{ delay: index*0.1 }}
-										className={`glass-card rounded-xl p-6 animate-pulse ${isCurrentLocation? 'ring-2 ring-blue-500 dark:ring-blue-400 bg-blue-50 dark:bg-blue-900/20':''}`}
-									>
-										<div className="flex items-center justify-between mb-4">
-											<div className="flex items-center gap-2">
-												<h3 className="font-semibold text-slate-800 dark:text-slate-200">
-													{location.name}
-												</h3>
-												{isCurrentLocation&&(
-													<span className="px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded-full">
-														Current
-													</span>
-												)}
-											</div>
-											<div className="flex items-center gap-2">
-												<button
-													onClick={() => {
-														setCurrentLocation( location )
-														// Track setting current location
-														analytics.trackUserAction( 'set-current-location',{
-															locationId: location.id,
-															locationName: location.name,
-															page: 'cities-loading-state'
-														} )
-													}}
-													className={`p-2 rounded-xl transition-all duration-300 ${isCurrentLocation
-														? 'text-blue-500 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
-														:'text-green-400 dark:text-green-500 hover:text-green-300 dark:hover:text-green-400 hover:bg-green-500/10 dark:hover:bg-green-500/20'
-														}`}
-													title={isCurrentLocation? 'Current location':'Set as current location'}
-												>
-													<span className="text-lg">🏠</span>
-												</button>
-												<span className="text-2xl">⏳</span>
-											</div>
-										</div>
-										<div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-											<p><strong>Location:</strong> {location.name}</p>
-											{location.state&&(
-												<p><strong>State/Province:</strong> {location.state}</p>
-											)}
-											<p><strong>Country:</strong> {location.country}</p>
-											<p><strong>Coordinates:</strong> {location.lat?.toFixed( 4 )}, {location.lon?.toFixed( 4 )}</p>
-											<div className="mt-4 text-center">
-												<span className="text-slate-500 dark:text-slate-400 text-sm">
-													Loading weather data...
-												</span>
-											</div>
-										</div>
-									</motion.div>
-								)
-							} )}
-						</AnimatePresence>
+				<div>
+					<div className="font-mono text-[11px] tracking-[.14em] text-mute2 mb-3">
+						RANKED BY TEMPERATURE
 					</div>
-				):(
-					/* Empty State */
-					<motion.div
-						initial={{ opacity: 0,y: 30 }}
-						animate={{ opacity: 1,y: 0 }}
-						transition={{ duration: 0.6,ease: "easeOut" }}
-						className="text-center py-20"
-					>
-						<div className="glass-card-strong rounded-3xl p-12 max-w-lg mx-auto animate-pulse-glow">
-							<div className="p-4 bg-blue-500/20 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-								<span className="text-4xl">📍</span>
-							</div>
-							<h3 className="text-3xl font-bold gradient-text-primary mb-4">
-								No Cities Yet
-							</h3>
-							<p className="text-slate-600 text-lg mb-8 leading-relaxed">
-								Start by adding cities from the Weather page or use your current location
-							</p>
-							<div className="space-y-4">
-								<button
-									onClick={() => window.location.href='/'}
-									className="btn-primary w-full text-lg py-4 flex items-center justify-center space-x-2"
+					{ranked.length===0? (
+						<div className="font-mono text-xs text-mute2">NO READINGS YET</div>
+					):(
+						<div className="flex flex-col gap-[7px] font-mono text-xs">
+							{ranked.map( ( { loc,temp },index ) => (
+								<div
+									key={loc.id}
+									className="grid grid-cols-[64px_1fr_34px] gap-2.5 items-center"
 								>
-									<span className="text-lg">➕</span>
-									<span>Add Your First City</span>
-								</button>
-								<p className="text-slate-500 text-sm">
-									Go to the Weather page to get started
-								</p>
-							</div>
+									<span className={currentLocation?.id===loc.id? 'text-ink':'text-mute'}>
+										{cityTag( loc.name )}
+									</span>
+									<span className="h-2 bg-line2 block">
+										<span
+											className={`block h-full ${index<2? 'bg-accent':'bg-[var(--bar)]'}`}
+											style={{ width: `${Math.max( 6,( ( temp-coldest )/span )*100 )}%` }}
+										/>
+									</span>
+									<span className="text-right">{readout( temp )}</span>
+								</div>
+							) )}
 						</div>
-					</motion.div>
-				)}
-			</motion.div>
+					)}
+				</div>
+			</div>
 		</div>
 	)
 }
