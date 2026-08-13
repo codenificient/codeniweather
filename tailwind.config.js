@@ -8,7 +8,26 @@ module.exports = {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: [ 'var(--font-geist)','ui-sans-serif','system-ui','sans-serif' ],
+  			mono: [ 'var(--font-mono)','ui-monospace','SFMono-Regular','monospace' ],
+  		},
+  		// 1b instrument-panel tokens, surfaced as Tailwind colours so screens can
+  		// use bg-panel / text-ink / border-line instead of inline var(--…).
   		colors: {
+  			bg: 'var(--bg)',
+  			panel: 'var(--panel)',
+  			panel2: 'var(--panel2)',
+  			line: 'var(--line)',
+  			line2: 'var(--line2)',
+  			ink: 'var(--ink)',
+  			ink2: 'var(--ink2)',
+  			mute: 'var(--mute)',
+  			mute2: 'var(--mute2)',
+  			accent: {
+  				DEFAULT: 'var(--accent)',
+  				ink: 'var(--accent-ink)',
+  			},
   			primary: {
   				'50': '#eff6ff',
   				'100': '#dbeafe',

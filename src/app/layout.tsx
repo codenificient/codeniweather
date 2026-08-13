@@ -2,13 +2,24 @@ import ClientLayout from '@/components/ClientLayout'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { WeatherProvider } from '@/contexts/WeatherContext'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Geist,JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
-const inter=Inter( {
+// The 1b instrument-panel design pairs Geist for UI text with JetBrains Mono
+// for every readout (temperatures, wind, pressure) so figures stay column-
+// aligned across cards.
+const geist=Geist( {
 	subsets: [ 'latin' ],
 	display: 'swap',
-	variable: '--font-inter',
+	weight: [ '300','400','500','600' ],
+	variable: '--font-geist',
+} )
+
+const jetbrainsMono=JetBrains_Mono( {
+	subsets: [ 'latin' ],
+	display: 'swap',
+	weight: [ '300','400','500' ],
+	variable: '--font-mono',
 } )
 
 export const metadata: Metadata={
@@ -41,14 +52,14 @@ export default function RootLayout ( {
 	children: React.ReactNode
 } ) {
 	return (
-		<html lang="en" className={inter.variable}>
+		<html lang="en" className={`${geist.variable} ${jetbrainsMono.variable}`}>
 			<head>
         <script defer src="/a/script.js" data-host-url="/a" data-website-id="000208fa-ccd0-4f92-9d30-37ff05d7ae67"></script>
 				<link rel="icon" href="/favicon.ico" sizes="any" />
 				<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 				<link rel="apple-touch-icon" href="/favicon.svg" />
 			</head>
-			<body className={`${inter.className} font-sans`}>
+			<body className={`${geist.className} font-sans`}>
 				{/* Animated background gradient orbs */}
 				<div className="gradient-orb-1"></div>
 				<div className="gradient-orb-2"></div>
