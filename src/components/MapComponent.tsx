@@ -402,7 +402,14 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			// Create map with initial center and zoom
 			const map=new Map( {
 				container: mapContainer.current,
-				style: 'streets-v2',
+				// A full style.json URL, not the bare id `'streets-v2'`: the SDK
+				// rejects the bare id ("Invalid style") and the weather layer then
+				// never attaches. Importing MapStyle from @maptiler/client is not a
+				// fix either — that resolves to a second copy of the library whose
+				// variant instances the SDK does not recognise, so the style silently
+				// never loads. The URL form is unambiguous. Keyed to the theme so the
+				// basemap matches the surrounding tokens.
+				style: `https://api.maptiler.com/maps/streets-v2-${theme==='dark'? 'dark':'light'}/style.json?key=${apiKey}`,
 				center: center,
 				zoom: zoom,
 				...( apiKey&&apiKey!=='YOUR_MAPTILER_API_KEY'&&{ apiKey } )
@@ -525,7 +532,15 @@ const MapComponent: React.FC<MapComponentProps>=( {
 			}
 			markersRef.current=[]
 		}
-	},[ apiKey,onMapReady,center,zoom,locations,currentLocation,getWeatherIconForCondition ] )
+		// Only rebuild the map when something structural changes. `center`, `zoom`,
+		// `locations`, `currentLocation` and `getWeatherIconForCondition` were in
+		// this list, and several of them get a fresh identity on every render — so
+		// the map was torn down and reconstructed continuously, never finishing its
+		// style load ("Style is not done loading") and eventually losing the WebGL
+		// context, which is what left the panel blank. center/zoom are initial view
+		// values only; markers are maintained by the effect below.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	},[ apiKey,theme ] )
 
 	// Update markers when locations change
 	useEffect( () => {

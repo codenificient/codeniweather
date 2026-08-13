@@ -2,7 +2,7 @@
 
 import { useWeather } from '@/contexts/WeatherContext'
 import dynamic from 'next/dynamic'
-import React,{ useEffect,useState } from 'react'
+import React,{ useEffect,useMemo,useState } from 'react'
 
 // MapTiler touches `window` during module init, so the map may only load in the
 // browser.
@@ -32,11 +32,18 @@ const InstrumentMap: React.FC<InstrumentMapProps>=( { height='300px',className='
 		if ( !gl ) setWebglSupported( false )
 	},[] )
 
-	const view=currentLocation
-		? { center: [ currentLocation.lon,currentLocation.lat ] as [ number,number ],zoom: 8 }
-		:locations.length>0
-			? { center: [ locations[ 0 ].lon,locations[ 0 ].lat ] as [ number,number ],zoom: 7 }
+	// MapComponent's init effect lists `center` in its dependencies, so handing
+	// it a freshly built array each render tears the map down and rebuilds it
+	// every time — which eventually loses the WebGL context and leaves an empty
+	// panel. Memoise on the primitive coordinates so the reference is stable.
+	const lon=currentLocation?.lon??locations[ 0 ]?.lon
+	const lat=currentLocation?.lat??locations[ 0 ]?.lat
+	const pinned=Boolean( currentLocation )
+	const view=useMemo( () => (
+		lon!==undefined&&lat!==undefined
+			? { center: [ lon,lat ] as [ number,number ],zoom: pinned? 8:7 }
 			:{ center: [ 0,20 ] as [ number,number ],zoom: 2 }
+	),[ lon,lat,pinned ] )
 
 	// `relative` + `overflow-hidden` matter: MapComponent positions its legend,
 	// badges and attribution absolutely, and without a positioned, clipping

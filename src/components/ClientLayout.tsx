@@ -1,6 +1,7 @@
 'use client'
 
 import { Menu,X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import React,{ useState } from 'react'
 import Sidebar from './Sidebar'
 
@@ -16,6 +17,11 @@ interface ClientLayoutProps {
  */
 const ClientLayout: React.FC<ClientLayoutProps>=( { children } ) => {
 	const [ sidebarOpen,setSidebarOpen ]=useState( false )
+	const pathname=usePathname()
+
+	// City detail (2c) is drawn full-bleed in the design — it carries its own
+	// "← CITIES" affordance instead of the rail.
+	const showRail=!pathname?.startsWith( '/city/' )
 
 	const toggleSidebar=() => {
 		setSidebarOpen( !sidebarOpen )
@@ -24,11 +30,11 @@ const ClientLayout: React.FC<ClientLayoutProps>=( { children } ) => {
 	return (
 		<div className="h-screen flex bg-bg text-ink overflow-hidden">
 			<div className="flex flex-1 h-full">
-				<Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+				{showRail&&<Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />}
 
 				<div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
 					{/* Mobile header — the rail is off-canvas below lg */}
-					<div className="lg:hidden flex-shrink-0 border-b border-line bg-bg">
+					<div className={`${showRail? 'lg:hidden':'hidden'} flex-shrink-0 border-b border-line bg-bg`}>
 						<div className="flex items-center justify-between px-4 py-3">
 							<button
 								onClick={toggleSidebar}
