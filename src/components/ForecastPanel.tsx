@@ -1,13 +1,17 @@
 'use client'
 
 import { condCode,readout } from '@/lib/instrument'
-import { convertTemperature } from '@/lib/unit-conversion'
 import { DailyForecast } from '@/types/weather'
 import React from 'react'
 
 interface ForecastPanelProps {
 	forecast: DailyForecast[]
 	loading?: boolean
+	/**
+	 * Retained for callers, but the values arrive already expressed in this
+	 * system — the forecast is requested from OpenWeatherMap with the unit
+	 * system applied, so converting here would convert a second time.
+	 */
 	units?: 'metric'|'imperial'
 }
 
@@ -18,7 +22,7 @@ interface ForecastPanelProps {
 const ForecastPanel: React.FC<ForecastPanelProps>=( {
 	forecast,
 	loading=false,
-	units='metric',
+	units='metric', // eslint-disable-line @typescript-eslint/no-unused-vars
 } ) => {
 	const rows=forecast.slice( 0,7 )
 
@@ -57,10 +61,8 @@ const ForecastPanel: React.FC<ForecastPanelProps>=( {
 							<span>{index===0? 'TODAY':day.dayOfWeek.slice( 0,3 ).toUpperCase()}</span>
 							<span className="text-mute">{condCode( day.weather )}</span>
 							<span className="text-right">
-								<span className="text-mute2">
-									{readout( convertTemperature( day.temp_min,units ) )}
-								</span>{' '}
-								{readout( convertTemperature( day.temp_max,units ) )}
+								<span className="text-mute2">{readout( day.temp_min )}</span>{' '}
+								{readout( day.temp_max )}
 							</span>
 						</div>
 					) )}

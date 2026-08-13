@@ -3,7 +3,7 @@
 import { StorageService } from '@/lib/storage'
 import { WeatherAPI } from '@/lib/weather-api'
 import { DailyForecast,Location,WeatherData,WeatherError,WeatherState } from '@/types/weather'
-import React,{ createContext,useContext,useEffect,useReducer } from 'react'
+import React,{ createContext,useContext,useEffect,useReducer,useRef } from 'react'
 
 interface WeatherContextType extends WeatherState {
 	addLocation: ( location: Location ) => Promise<void>
@@ -292,9 +292,22 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }>=( { childr
 		dispatch( { type: 'SET_UNITS',payload: units } )
 		// Save to localStorage
 		localStorage.setItem( 'codeniweather-units',units )
-		// Refresh all weather data with new units
-		refreshAllWeather()
+		// The refetch deliberately happens in the effect below rather than here:
+		// calling refreshAllWeather() in this same tick closes over the PREVIOUS
+		// state.units, so every request went out in the old unit while the labels
+		// had already flipped — which is how °C values ended up captioned °F.
 	}
+
+	// Refetch everything whenever the unit system actually changes. Running this
+	// as an effect means the requests go out with the committed value; the first
+	// run is skipped because the initial load already fetched.
+	const lastUnits=useRef( state.units )
+	useEffect( () => {
+		if ( lastUnits.current===state.units ) return
+		lastUnits.current=state.units
+		refreshAllWeather()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	},[ state.units ] )
 
 	// Set current location
 	const setCurrentLocation=( location: Location ) => {
