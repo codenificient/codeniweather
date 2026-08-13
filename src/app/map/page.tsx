@@ -1,25 +1,11 @@
 'use client'
 
-import InstrumentMap from '@/components/InstrumentMap'
+import InstrumentMap,{ MAP_LAYERS as LAYERS } from '@/components/InstrumentMap'
 import { useWeather } from '@/contexts/WeatherContext'
 import { analytics } from '@/lib/analytics'
 import { readout } from '@/lib/instrument'
 import { useRouter } from 'next/navigation'
 import { useEffect,useState } from 'react'
-
-/**
- * Layers the app supports, in the design's order. The design also lists SNOW;
- * the app's MapTiler wiring exposes six, so only those are offered rather than
- * showing a control that does nothing.
- */
-const LAYERS=[
-	{ id: 'radar',code: 'RADAR',title: 'Radar',legend: 'REFLECTIVITY' },
-	{ id: 'temperature',code: 'TEMP',title: 'Temperature',legend: 'TEMPERATURE' },
-	{ id: 'precipitation',code: 'PRECIP',title: 'Precipitation',legend: 'PRECIPITATION' },
-	{ id: 'wind',code: 'WIND',title: 'Wind',legend: 'WIND SPEED' },
-	{ id: 'pressure',code: 'QNH',title: 'Pressure',legend: 'PRESSURE' },
-	{ id: 'clouds',code: 'CLOUD',title: 'Cloud cover',legend: 'CLOUD COVER' },
-]
 
 export default function MapPage () {
 	const { locations,weatherData,selectedLayer,setSelectedLayer,currentLocation }=useWeather()
