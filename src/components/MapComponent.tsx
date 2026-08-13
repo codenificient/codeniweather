@@ -194,14 +194,19 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 		// Check if map style is loaded
 		if ( !mapRef.current.isStyleLoaded() ) {
-
-			// Retry after a short delay if we haven't exceeded max retries
+			// Wait for the map to tell us it is ready rather than polling on a
+			// fixed budget. The old version gave up after 10 × 500ms, and on a cold
+			// cache the style routinely takes longer than that — after which the
+			// layer was never created at all and the map stayed blank until the
+			// user happened to switch layers. `once('idle')` fires when the style
+			// has loaded and the first frame is drawn. The retry counter is kept
+			// only as a guard against re-arming forever.
 			if ( retryCount<10 ) {
-				setTimeout( async () => {
-					await createWeatherLayer( layerType,retryCount+1 )
-				},500 )
+				mapRef.current.once( 'idle',() => {
+					void createWeatherLayer( layerType,retryCount+1 )
+				} )
 			} else {
-				console.error( `❌ Max retries exceeded for weather layer creation: ${layerType}` )
+				console.error( `❌ Gave up creating weather layer: ${layerType}` )
 			}
 			return null
 		}
@@ -435,6 +440,12 @@ const MapComponent: React.FC<MapComponentProps>=( {
 
 			// Wait for map style to load before creating weather layers
 			map.on( 'style.load',() => {
+				// The map is constructed before the surrounding panel has settled its
+				// height, so MapLibre latches onto a stale viewport and never paints —
+				// the canvas stays blank until some later interaction forces a resize.
+				// Ask for one explicitly once the style is up. This is why the map only
+				// appeared after clicking a layer chip.
+				map.resize()
 				setIsMapReady( true )
 				onMapReady?.()
 			} )
