@@ -161,7 +161,12 @@ export default function Home () {
 
 			{!currentWeather&&(
 				<div className="px-[26px] py-16 font-mono text-[13px] text-mute">
-					{loading? 'ACQUIRING STATION DATA…':'NO STATION SELECTED — SEARCH FOR A CITY ABOVE'}
+					{/* A station is picked automatically once locations load, so "no
+					    station" is only true when there are genuinely none — otherwise
+					    the reading is simply still in flight. */}
+					{currentLocation||loading||locations.length>0
+						? 'ACQUIRING STATION DATA…'
+						:'NO STATION SELECTED — SEARCH FOR A CITY ABOVE'}
 				</div>
 			)}
 

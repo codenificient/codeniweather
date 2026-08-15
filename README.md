@@ -1,29 +1,56 @@
 # CodeniWeather 🌤️
 
-[![CodeniWeather Preview](https://api.microlink.io/?url=https://codeniweather.tioye.dev&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1200&viewport.height=630)](https://codeniweather.tioye.dev)
+[![CodeniWeather Preview](https://api.microlink.io/?url=https://codeniweather.afrotomation.com&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1200&viewport.height=630&waitForTimeout=5000)](https://codeniweather.afrotomation.com)
 
-A modern, responsive weather application built with Next.js 14, featuring real-time weather data, interactive weather maps, 7-day forecasts, and a beautiful glass-morphism UI with dark/light theme support.
+<!-- waitForTimeout is load-bearing: weather and map tiles are fetched client
+     side, so capturing immediately yields an empty shell. Five seconds is
+     enough for conditions, the forecast and the map layer to paint. -->
+
+
+**Live:** [codeniweather.afrotomation.com](https://codeniweather.afrotomation.com)
+
+A weather companion built with Next.js and React, featuring real-time conditions,
+7-day and 3-hourly forecasts, interactive MapTiler weather layers, and an
+instrument-panel interface that shares one token set across light and dark.
 
 ## 🚀 Quick Start
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Set up environment variables
 cp .env.example .env.local
 # Add your API keys to .env.local:
-# - NEXT_PUBLIC_OPENWEATHER_API_KEY (for weather data)
-# - NEXT_PUBLIC_MAPTILER_API_KEY (for maps and geocoding)
+# - NEXT_PUBLIC_OPENWEATHER_API_KEY (weather data)
+# - NEXT_PUBLIC_MAPTILER_API_KEY (maps, weather layers, geocoding)
 
 # Run development server
-npm run dev
+bun run dev
 
 # Build for production
-npm run build
+bun run build
 ```
 
 > 📖 **Need detailed setup instructions?** Check out our [Setup Guide](SETUP.md) for step-by-step instructions and troubleshooting tips.
+
+> ⚠️ A freshly created OpenWeatherMap key returns `401` for up to a couple of
+> hours while it activates, even though the dashboard already shows it as
+> Active. If weather lookups fail on a brand-new key, verify it directly with
+> `curl "https://api.openweathermap.org/data/2.5/weather?lat=0&lon=0&appid=YOUR_KEY"`
+> before assuming the app is misconfigured.
+
+## 🌐 Deployment
+
+Self-hosted on **Coolify**, behind a Cloudflare tunnel.
+
+- **Production:** https://codeniweather.afrotomation.com
+- **Build:** the repository `Dockerfile` (Next.js `output: 'standalone'`)
+- **Deploys:** pushing to `master` fires a Coolify webhook and ships in ~2 minutes
+- **Health check:** `GET /api/health`
+
+`NEXT_PUBLIC_*` variables are inlined by Next.js at **build** time, so changing a
+key requires a redeploy — restarting the container is not enough.
 
 ## 📁 Project Structure
 
@@ -32,37 +59,46 @@ codeniweather/
 ├── src/                    # Source code
 │   ├── app/               # Next.js app router pages
 │   ├── components/        # React components
-│   ├── contexts/          # React contexts
-│   ├── lib/              # Utility libraries
-│   └── types/            # TypeScript type definitions
-├── public/               # Static assets
-├── docs/                # Documentation
-│   ├── README.md
-│   ├── FEATURE_SPEC.md
-│   ├── TESTING_SUMMARY.md
-│   └── ...
-├── tests/               # Test files
-│   ├── unit/           # Unit tests
-│   ├── integration/    # Integration tests
-│   ├── e2e/           # End-to-end tests
-│   └── scripts/       # Test scripts
-├── scripts/            # Build and utility scripts
-└── setup.sh           # Environment setup script
+│   ├── contexts/          # ThemeContext, WeatherContext
+│   ├── lib/               # Utility libraries
+│   └── types/             # TypeScript type definitions
+├── public/                # Static assets
+├── docs/                  # Documentation
+├── tests/                 # Unit, integration and e2e tests
+├── scripts/               # Build and utility scripts
+└── Dockerfile             # Production image
 ```
+
+### Routes
+
+| Route | Screen |
+| --- | --- |
+| `/` | Now — current conditions, surface readouts, map preview, hourly strip |
+| `/cities` | Saved cities, ranked by temperature |
+| `/city/[id]` | City detail (full-bleed, no navigation rail) |
+| `/map` | Radar map with seven weather layers |
+| `/map/fullscreen` | Fullscreen map framing every saved city |
+| `/settings` | Appearance, units, privacy, data sources |
+
+Every route segment has its own `error.tsx` and `loading.tsx`, plus a custom
+`not-found.tsx`.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 14.2.32 (App Router)
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 3.4.17
-- **Animations**: Framer Motion 10.18.0
-- **Icons**: Lucide React 0.294.0
-- **Maps**: MapTiler SDK 3.7.0 & Weather 3.1.1
+- **Framework**: Next.js 16 (App Router)
+- **UI**: React 19
+- **Language**: TypeScript 5.9
+- **Styling**: Tailwind CSS 3.4 over CSS custom properties
+- **Typography**: Geist (interface) + JetBrains Mono (readouts)
+- **Animations**: Framer Motion 12
+- **Icons**: Lucide React
+- **Maps**: MapTiler SDK 3.7 & MapTiler Weather 3.1
+- **Analytics**: `@codenificient/analytics-sdk`
 - **APIs**:
-  - OpenWeatherMap (weather data)
-  - MapTiler (maps, geocoding, weather layers)
-- **Testing**: Jest 29.7.0
-- **UI Components**: Radix UI, Shadcn/ui
+  - OpenWeatherMap (conditions and forecast)
+  - MapTiler (basemap, weather layers, geocoding)
+- **Testing**: Jest
+- **Package manager**: bun
 
 ## 📚 Documentation
 
@@ -78,77 +114,68 @@ codeniweather/
 
 ```bash
 # Run all tests
-npm test
+bun run test
 
 # Run specific test suites
-npm run test:unit
-npm run test:integration
-npm run test:e2e
-
-# Run test scripts
-node tests/scripts/run-all-tests.js
+bun run test:unit
+bun run test:integration
+bun run test:e2e
 ```
 
 ## 🎨 Features
 
 ### 🌤️ Weather Data
 
-- Real-time weather data from OpenWeatherMap
-- 7-day weather forecast with detailed hourly data
-- Current location detection and management
-- Multiple location support with favorites
-- Temperature unit conversion (Celsius/Fahrenheit)
+- Real-time conditions from OpenWeatherMap
+- 7-day forecast and a 3-hourly strip with precipitation probability
+- Browser geolocation with MapTiler reverse geocoding
+- Multiple saved locations, ranked by temperature
+- Metric/imperial switching across every panel
+- Dew point derived from temperature and humidity (Magnus-Tetens)
 
 ### 🗺️ Interactive Maps
 
-- Interactive weather maps powered by MapTiler
-- Multiple weather layers (temperature, precipitation, wind, pressure, clouds, radar)
-- Animated weather data with play/pause controls
-- State-level weather aggregation with badges
-- Fullscreen map view
-- Zoom to location functionality
+- MapTiler basemap that follows the active theme
+- Seven weather layers: radar, temperature, precipitation, wind, pressure,
+  cloud cover and snow
+- Map preview on the Now screen, a dedicated radar screen, and a fullscreen view
+- Saved cities listed beside the map with live temperatures
 
 ### 🎨 UI/UX
 
-- Responsive glass-morphism design
-- Dark/light theme support with system preference detection
-- Smooth animations and transitions with Framer Motion
-- Mobile-first responsive design
-- Loading states and error handling
-- Accessibility features
+- Instrument-panel interface: hairline rules, flat panels, mono readouts
+- Light and dark share a single token set, so both stay in step
+- Mono numerals keep temperature columns aligned across panels
+- Dark/light theme with system preference detection
+- Per-route error boundaries, loading skeletons and a custom 404
+- Mobile-first responsive layout with an off-canvas navigation rail
 
 ### 🔧 Technical Features
 
-- Next.js 14 with App Router
-- TypeScript for type safety
+- Next.js App Router with React 19
+- TypeScript throughout
 - Context-based state management
-- Local storage for user preferences
+- Local storage for saved cities and preferences — no account required
 - WebGL weather layer rendering
-- Progressive Web App (PWA) ready
+- Web app manifest and custom favicons
+
+### Reporting honesty
+
+Readouts the free OpenWeatherMap tier does not provide are shown as `—` rather
+than estimated. UV index has no source on the current plan, and wind gusts
+appear only when the station actually reports one.
 
 ## 🆕 Recent Updates
 
-### v0.1.0 (Latest)
+### Instrument-panel redesign (2026-08)
 
-- **Interactive Weather Maps**: Added MapTiler-powered weather maps with multiple layers
-- **Animation Controls**: Play/pause/reset controls for weather data animation
-- **State Weather Badges**: Real-time weather aggregation by US states
-- **Fullscreen Map View**: Dedicated fullscreen map page with enhanced controls
-- **Current Location Management**: Set and manage current location across the app
-- **Theme System**: Complete dark/light theme implementation
-- **Favicon & Branding**: Custom weather-themed favicon and consistent branding
-- **Security Updates**: Updated to Next.js 14.2.32 with security fixes
-- **Package Updates**: All dependencies updated to latest stable versions
-
-### Key Features Added
-
-- 🗺️ Interactive weather maps with 7 different weather layers
-- ⏯️ Animated weather data with timeline controls
-- 🏠 Current location management system
-- 🌙 Dark/light theme with system preference detection
-- 📱 Fullscreen map experience
-- 🎯 State-level weather aggregation
-- 🔒 Security vulnerability fixes
+- Rebuilt all six screens on a shared light/dark token set
+- Replaced Inter with Geist + JetBrains Mono, mono reserved for numeric readouts
+- Ported the error boundaries, loading skeletons and added a custom 404
+- Fixed C/F switching, which refetched using the previous unit and left Celsius
+  values captioned °F
+- Fixed a map that rebuilt itself on every render and an invalid MapTiler style
+  id, both of which left the map blank
 
 ## 📄 License
 
